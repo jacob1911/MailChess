@@ -54,6 +54,10 @@ def inbox():
                 fen=fen
             )
 
+            # Store recipient in session for new thread (no messages yet)
+            session[f'thread_{thread.id}_recipient'] = new_mail
+            session['current_subject'] = subject
+
             return redirect(url_for("mail.thread", thread_id=thread.id))
         else:
             flash("Please provide both recipient and subject", "error")
@@ -99,29 +103,117 @@ def thread(thread_id):
             new_fen, result, game_over = process_move(fen, move_uci)
             fen = new_fen  # Update FEN with processed move
 
+        # Get threading headers for proper Gmail threading
+        from models import Message
+        last_message = Message.query.filter_by(thread_id=thread_obj.id).order_by(Message.date.desc()).first()
+        in_reply_to = None
+        references = None
+        gmail_thread_id = thread_obj.gmail_thread_id if not thread_obj.gmail_thread_id.startswith("temp_") else None
+
+        if last_message and last_message.in_reply_to:
+            in_reply_to = last_message.in_reply_to
+            # Build References header (chain of all Message-IDs in thread)
+            if last_message.references:
+                references = f"{last_message.references} {last_message.in_reply_to}"
+            else:
+                references = last_message.in_reply_to
+
+        # Add "Re:" prefix to subject if this is a reply
+        reply_subject = thread_obj.subject
+        if last_message and not thread_obj.subject.lower().startswith("re:"):
+            reply_subject = f"Re: {thread_obj.subject}"
+
+        # Prepare email body with move notation
+        if move_uci:
+            if is_html:
+                email_body = f"{body}<p><strong>Move:</strong> {move_uci}</p>"
+            else:
+                email_body = f"{body}\n\nMove: {move_uci}"
+        else:
+            email_body = body
+
         # Send email
         access_token = session.get("access_token")
-        recipient = thread_obj.messages[0].sender if thread_obj.messages else None
+
+        # Find recipient: from messages or from session (new thread)
+        recipient = None
+        if thread_obj.messages:
+            recipient = thread_obj.messages[0].sender
+        else:
+            # No messages yet - check session for new thread recipient
+            session_key = f'thread_{thread_obj.id}_recipient'
+            recipient = session.get(session_key)
 
         if not recipient:
             flash("No recipient found", "error")
             return redirect(url_for("mail.thread", thread_id=thread_id))
 
         try:
-            send_email_via_api(
+            result = send_email_via_api(
                 access_token=access_token,
-                to_email=recipient,
-                subject=thread_obj.subject,
-                body=body,
+                user_email=user_email,
+                to=recipient,
+                subject=reply_subject,
+                body=email_body,
                 is_html=is_html,
-                thread_id=thread_obj.gmail_thread_id
+                in_reply_to=in_reply_to,
+                references=references,
+                thread_id=gmail_thread_id
             )
 
-            # Update thread FEN
-            update_thread_fen(thread_obj.id, fen)
+            # Save sent message to database
+            if result and result.get('gmail_message_id'):
+                from models import Message
+                from datetime import datetime, timezone
+                import re
 
-            flash("Message sent successfully", "success")
+                # Update thread's gmail_thread_id if it was temporary
+                if thread_obj.gmail_thread_id.startswith("temp_") and result.get('thread_id'):
+                    thread_obj.gmail_thread_id = result['thread_id']
+
+                # Update thread snippet
+                if is_html:
+                    snippet_text = re.sub(r'<[^>]+>', '', body)
+                    snippet_text = re.sub(r'\s+', ' ', snippet_text).strip()
+                else:
+                    snippet_text = body.strip()
+                thread_obj.snippet = snippet_text[:200]
+                thread_obj.last_updated = datetime.now(timezone.utc)
+
+                # Save message to database
+                msg = Message(
+                    gmail_message_id=result['gmail_message_id'],
+                    thread_id=thread_obj.id,
+                    user_id=user_id,
+                    sender=user_email,
+                    recipient=recipient,
+                    date=datetime.now(timezone.utc),
+                    subject=reply_subject,
+                    body_plain=body if not is_html else "",
+                    body_html=body if is_html else "",
+                    in_reply_to=in_reply_to or result.get('message_id'),
+                    references=references,
+                    label_ids="",
+                    move=move_uci
+                )
+                db.session.add(msg)
+
+                # Update thread FEN
+                update_thread_fen(thread_obj.id, fen)
+
+                db.session.commit()
+
+                # Clean up session recipient after first message is sent
+                session_key = f'thread_{thread_obj.id}_recipient'
+                if session_key in session:
+                    session.pop(session_key)
+
+                flash("Message sent successfully", "success")
+            else:
+                flash("Email sent but couldn't save to database", "warning")
+
         except Exception as e:
+            db.session.rollback()
             flash(f"Failed to send message: {str(e)}", "error")
 
         return redirect(url_for("mail.thread", thread_id=thread_id))
@@ -136,6 +228,12 @@ def thread(thread_id):
         elif msg.recipient and msg.recipient != user_email:
             other = msg.recipient
             break
+
+    # If no messages yet, check session for new thread recipient
+    if not other:
+        session_key = f'thread_{thread_obj.id}_recipient'
+        if session_key in session:
+            other = session.get(session_key)
 
     # Count won games (placeholder)
     won_count = 0
