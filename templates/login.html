@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MailChess</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center">
+    <div class="container mx-auto px-4">
+        <div class="max-w-md mx-auto bg-white rounded-lg shadow-2xl p-8">
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <i class="fas fa-chess-knight text-6xl text-indigo-600 mb-4"></i>
+                <h1 class="text-3xl font-bold text-gray-800">MailChess</h1>
+                <p class="text-gray-600 mt-2">Spil skak gennem Gmail</p>
+            </div>
+
+            <!-- Login Button -->
+            <a href="{{ url_for('auth.login_google') }}"
+               class="w-full bg-white border-2 border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center shadow-md">
+                <svg class="w-6 h-6 mr-3" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                Log ind med Google
+            </a>
+
+            <!-- Important Notice -->
+            <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-yellow-800">Vigtig information</h3>
+                        <div class="mt-2 text-sm text-yellow-700">
+                            <p>Når du logger ind, skal du give følgende tilladelser:</p>
+                            <ul class="list-disc list-inside mt-2 space-y-1">
+                                <li>Læse dine Gmail emails</li>
+                                <li>Sende emails på dine vegne</li>
+                            </ul>
+                            <p class="mt-2 font-semibold">Uden disse tilladelser virker appen ikke.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="mt-8 space-y-3">
+                <div class="flex items-start">
+                    <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                    <div>
+                        <h4 class="font-semibold text-gray-800">Gmail Integration</h4>
+                        <p class="text-sm text-gray-600">Spil skak gennem dine normale Gmail emails</p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                    <div>
+                        <h4 class="font-semibold text-gray-800">Automatisk Synkronisering</h4>
+                        <p class="text-sm text-gray-600">Dine træk opdateres automatisk fra emails</p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                    <div>
+                        <h4 class="font-semibold text-gray-800">Interaktivt Skakbræt</h4>
+                        <p class="text-sm text-gray-600">Lav træk direkte i browseren</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy Notice -->
+            <div class="mt-6 text-xs text-gray-500 text-center">
+                <i class="fas fa-lock mr-1"></i>
+                Vi gemmer kun email metadata. Dine emails forbliver i din Gmail.
+            </div>
+        </div>
+    </div>
+</body>
+</html>
