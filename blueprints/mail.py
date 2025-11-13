@@ -96,10 +96,8 @@ def thread(thread_id):
         # Process chess move if provided
         fen = thread_obj.fen
         if move_uci:
-            fen, error = process_move(fen, move_uci)
-            if error:
-                flash(f"Invalid move: {error}", "error")
-                return redirect(url_for("mail.thread", thread_id=thread_id))
+            new_fen, result, game_over = process_move(fen, move_uci)
+            fen = new_fen  # Update FEN with processed move
 
         # Send email
         access_token = session.get("access_token")
