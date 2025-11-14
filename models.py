@@ -22,6 +22,7 @@ class Thread(db.Model):
     subject = db.Column(db.String(500))
     snippet = db.Column(db.String(500))
     fen = db.Column(db.String(100))  # Current chess position (FEN)
+    game_result = db.Column(db.String(10))  # '1-0', '0-1', '1/2-1/2', or None
     last_updated = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
@@ -43,6 +44,7 @@ class Message(db.Model):
     references = db.Column(db.Text)
     label_ids = db.Column(db.String(255))
     move = db.Column(db.String(20), nullable=True)  # Chess move in UCI format
+    evaluation_score = db.Column(db.Integer, nullable=True)  # Stockfish centipawn evaluation
 
 
 class CustomLabel(db.Model):

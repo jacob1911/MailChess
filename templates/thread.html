@@ -214,6 +214,28 @@
         #messagesContainer *:not(.fa):not(.fas):not(.far):not(.fab) {
             max-width: 100%;
         }
+
+        .slider-container {
+            width: 300px;
+            margin: 30px auto;
+            text-align: center;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #4CAF50;
+        }
+
+        .labels {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+
+        #evalValue {
+            margin-top: 10px;
+            font-family: monospace;
+        }
     </style>
 </head>
 
@@ -236,7 +258,7 @@
                     </h1>
                     <p class="text-gray-600 mt-2">
                         <span class="font-semibold">{{ me }}</span>
-                        <i class="fas fa-exchange-alt mx-2" ></i>
+                        <i class="fas fa-exchange-alt mx-2"></i>
                         <span class="font-semibold">{{ other or 'Ikke specificeret' }}</span>
                     </p>
                 </div>
@@ -244,11 +266,12 @@
                     <button id="exportConversationBtn" onclick="exportConversation()"
                         class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-3 py-2 rounded-lg transition duration-200 flex items-center text-sm"
                         title="Eksporter samtale">
-                        <img src="{{ url_for('static',filename='img/openai.svg')}}" alt="chatIcon" width="20" height="20" >
+                        <img src="{{ url_for('static',filename='img/openai.svg')}}" alt="chatIcon" width="20"
+                            height="20">
                     </button>
                     <button id="syncThreadBtn" onclick="syncThread()"
                         class="bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-2 rounded-lg transition duration-200 flex items-center text-sm">
-                        <i id="syncThreadIcon" class="fas fa-sync-alt" ></i>
+                        <i id="syncThreadIcon" class="fas fa-sync-alt"></i>
                     </button>
                     <div class="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-lg">
                         <i class="fas fa-trophy mr-2"></i>
@@ -262,7 +285,8 @@
         </div>
 
         <!-- Summary Modal -->
-        <div id="summaryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div id="summaryModal"
+            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-lg shadow-2xl p-6 max-w-2xl w-full mx-4">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-xl font-bold text-gray-800 flex items-center">
@@ -362,9 +386,23 @@
                 <div class="mt-4 text-center text-sm text-gray-600">
                     <p><i class="fas fa-info-circle mr-1"></i> Træk en brik for at lave dit næste træk</p>
                 </div>
+                <div class="slider-container">
+                    <div class="labels">
+                        <span>⚫ Black</span>
+                        <span>⚪ White</span>
+                    </div>
+                    <div>
+                        <input type="range" id="evalSlider" min="-1000" max="1000" step="10" value="{{ evaluation }}" disabled>
+                        <div id="evalValue">evaluation: {{ evaluation }}</div>
+                    </div>
+                </div>
             </div>
+            <p>Stockscore = {{ evaluation }}</p>
+
         </div>
     </div>
+
+   
 
     <script>
         let game = new Chess("{{ fen }}");
@@ -660,7 +698,7 @@
         });
 
         // Load messages automatically when page loads
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             updateThreadMessages();
         });
     </script>
