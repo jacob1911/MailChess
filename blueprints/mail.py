@@ -855,7 +855,7 @@ Regler for dit referat:
                 }
             ],
             max_tokens=200,  # Begrænser længden (ca. 150 ord)
-            temperature=1.3,  # Kreativitet (0-2, lavere = mere forudsigeligt)
+            temperature=0.2,  # Kreativitet (0-2, lavere = mere forudsigeligt)
             presence_penalty=0.5,
             frequency_penalty=0.0
         )

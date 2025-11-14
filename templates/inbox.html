@@ -42,6 +42,9 @@
 </head>
 
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="preloader">
+        <img src="{{url_for('static', filename='EC-animation.gif')}}" alt="Loading..." sizes="100%, 100%">
+    </div>
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
@@ -252,9 +255,11 @@
                                                     {% if label in custom_label_dict %}
                                                     {# Custom label #}
                                                     {% set cl = custom_label_dict[label] %}
-                                                    <span class="label-badge" style="background-color: {{ cl.color }}22; color: {{ cl.color }};">
+                                                    <span class="label-badge"
+                                                        style="background-color: {{ cl.color }}22; color: {{ cl.color }};">
                                                         {% if cl.icon_path %}
-                                                        <img src="{{ cl.icon_path }}" alt="{{ cl.display_name }}" style="width: 12px; height: 12px;">
+                                                        <img src="{{ cl.icon_path }}" alt="{{ cl.display_name }}"
+                                                            style="width: 12px; height: 12px;">
                                                         {% else %}
                                                         <i class="fas fa-tag"></i>
                                                         {% endif %}
@@ -264,7 +269,8 @@
                                                     <span class="label-badge label-{{ label.lower() }}">
                                                         {% if label == 'UNREAD' %}<i class="fas fa-envelope"></i>
                                                         {% elif label == 'STARRED' %}<i class="fas fa-star"></i>
-                                                        {% elif label == 'IMPORTANT' %}<i class="fas fa-exclamation"></i>
+                                                        {% elif label == 'IMPORTANT' %}<i
+                                                            class="fas fa-exclamation"></i>
                                                         {% elif label == 'INBOX' %}<i class="fas fa-inbox"></i>
                                                         {% else %}{{ label }}
                                                         {% endif %}
@@ -279,14 +285,16 @@
                                                 {% if t.other_person %}
                                                 <span class="font-medium">{{ t.other_person.split('@')[0] }}</span> -
                                                 {% endif %}
-                                                {{ t.snippet[:40] + '...' if t.snippet and t.snippet|length > 40 else t.snippet or 'Ingen beskeder endnu' }}
+                                                {{ t.snippet[:40] + '...' if t.snippet and t.snippet|length > 40 else
+                                                t.snippet or 'Ingen beskeder endnu' }}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <span class="text-xs text-gray-500 whitespace-nowrap">
-                                        {{ t.latest_message_date.strftime('%d/%m/%y %H:%M') if t.latest_message_date else '' }}
+                                        {{ t.latest_message_date.strftime('%d/%m/%y %H:%M') if t.latest_message_date
+                                        else '' }}
                                     </span>
                                     <i class="fas fa-chevron-right text-gray-400"></i>
                                 </div>
@@ -330,6 +338,16 @@
     </div>
 
     <script>
+        window.addEventListener("load", () => {
+            setTimeout(() => {
+                // Fade out preloader
+                document.getElementById("preloader").classList.add("hidden");
+
+                // Fade in content
+                document.getElementById("content").classList.add("visible");
+            }, 2000); // play animation for 2 seconds
+        });
+
         // Store custom labels globally
         let customLabels = [];
 
