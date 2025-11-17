@@ -5,56 +5,163 @@ Alternative to SMTP that works better with OAuth
 import base64
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 from email.utils import formataddr
 import requests
+import os
 
 
-def send_email_via_api(access_token, user_email, to, subject, body, is_html=False, in_reply_to=None, references=None, thread_id=None):
+def send_email_via_api(access_token, user_email, to, subject, body, is_html=False, in_reply_to=None, references=None, thread_id=None, attachments=None):
     """
     Send email using Gmail API (more reliable with OAuth than SMTP)
-    Supports both plain text and HTML emails
+    Supports both plain text and HTML emails with attachments
 
     Args:
         in_reply_to: Message-ID of the message being replied to (for threading)
         references: Space-separated list of Message-IDs in the thread (for threading)
         thread_id: Gmail's internal thread ID (for threading within Gmail)
+        attachments: List of file objects from request.files (e.g., [file1, file2])
     """
     try:
-        if is_html:
-            # Create multipart message for HTML with plain text fallback
+        # Create base message structure
+        if attachments:
+            # If we have attachments, always use multipart/mixed
+            message = MIMEMultipart('mixed')
+        elif is_html:
+            # HTML without attachments uses multipart/alternative
             message = MIMEMultipart('alternative')
-            message['Subject'] = subject
-            message['From'] = formataddr(("MailChess", user_email))
-            message['To'] = to
-
-            # Add threading headers if provided
-            if in_reply_to:
-                message['In-Reply-To'] = in_reply_to
-            if references:
-                message['References'] = references
-
-            # Create plain text version by stripping HTML tags (simple fallback)
-            import re
-            plain_text = re.sub(r'<[^>]+>', '', body)
-            plain_text = re.sub(r'\s+', ' ', plain_text).strip()
-
-            # Attach both plain and HTML versions
-            part1 = MIMEText(plain_text, 'plain', 'utf-8')
-            part2 = MIMEText(body, 'html', 'utf-8')
-            message.attach(part1)
-            message.attach(part2)
         else:
-            # Create plain text message
+            # Plain text without attachments
             message = MIMEText(body, 'plain', 'utf-8')
             message['Subject'] = subject
             message['From'] = formataddr(("MailChess", user_email))
             message['To'] = to
-
-            # Add threading headers if provided
             if in_reply_to:
                 message['In-Reply-To'] = in_reply_to
             if references:
                 message['References'] = references
+
+            # Skip to encoding (no attachments to add)
+            raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
+
+            # Send via Gmail API (code continues below)
+            url = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            }
+            data = {"raw": raw_message}
+
+            if thread_id:
+                try:
+                    thread_id_hex = format(int(thread_id), 'x')
+                    data["threadId"] = thread_id_hex
+                except (ValueError, TypeError):
+                    data["threadId"] = thread_id
+
+            response = requests.post(url, headers=headers, json=data)
+
+            if response.status_code == 200:
+                response_data = response.json()
+                message_id_value = None
+
+                if 'id' in response_data:
+                    msg_url = f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{response_data['id']}"
+                    msg_response = requests.get(msg_url, headers=headers, params={'format': 'metadata', 'metadataHeaders': ['Message-ID']})
+
+                    if msg_response.status_code == 200:
+                        msg_data = msg_response.json()
+                        for header in msg_data.get('payload', {}).get('headers', []):
+                            if header['name'].lower() == 'message-id':
+                                message_id_value = header['value']
+                                break
+
+                thread_id_hex = response_data.get('threadId')
+                thread_id_decimal = None
+                if thread_id_hex:
+                    try:
+                        thread_id_decimal = str(int(thread_id_hex, 16))
+                    except ValueError:
+                        thread_id_decimal = thread_id_hex
+
+                return {
+                    'success': True,
+                    'message_id': message_id_value,
+                    'gmail_message_id': response_data.get('id'),
+                    'thread_id': thread_id_decimal
+                }
+            elif response.status_code == 401:
+                raise Exception("OAuth token er udløbet. Log venligst ud og ind igen.")
+            elif response.status_code == 403:
+                raise Exception("Utilstrækkelige tilladelser til at sende email.")
+            else:
+                error_data = response.json()
+                error_msg = error_data.get('error', {}).get('message', 'Ukendt fejl')
+                raise Exception(f"Gmail API fejl: {error_msg}")
+
+        # Set headers (for multipart messages)
+        message['Subject'] = subject
+        message['From'] = formataddr(("MailChess", user_email))
+        message['To'] = to
+        if in_reply_to:
+            message['In-Reply-To'] = in_reply_to
+        if references:
+            message['References'] = references
+
+        # Add body content
+        if is_html:
+            # HTML email - create alternative part
+            if attachments:
+                # Create a nested multipart/alternative for HTML+text inside mixed
+                msg_alternative = MIMEMultipart('alternative')
+            else:
+                msg_alternative = message  # Use the main message if no attachments
+
+            # Create plain text version by stripping HTML tags
+            import re
+            plain_text = re.sub(r'<[^>]+>', '', body)
+            plain_text = re.sub(r'\s+', ' ', plain_text).strip()
+
+            part1 = MIMEText(plain_text, 'plain', 'utf-8')
+            part2 = MIMEText(body, 'html', 'utf-8')
+            msg_alternative.attach(part1)
+            msg_alternative.attach(part2)
+
+            if attachments:
+                message.attach(msg_alternative)
+        else:
+            # Plain text email
+            if attachments:
+                # If we have attachments with plain text, add text as a part
+                text_part = MIMEText(body, 'plain', 'utf-8')
+                message.attach(text_part)
+            # else case already handled above
+
+        # Add attachments if provided
+        if attachments:
+            for file_obj in attachments:
+                if file_obj and file_obj.filename:
+                    # Read file data
+                    file_data = file_obj.read()
+                    filename = file_obj.filename
+
+                    # Determine MIME type based on file extension
+                    import mimetypes
+                    mime_type, _ = mimetypes.guess_type(filename)
+                    if mime_type:
+                        main_type, sub_type = mime_type.split('/', 1)
+                        part = MIMEBase(main_type, sub_type)
+                    else:
+                        # Fallback to octet-stream
+                        part = MIMEBase('application', 'octet-stream')
+
+                    part.set_payload(file_data)
+                    encoders.encode_base64(part)
+                    part.add_header('Content-Disposition', f'attachment; filename="{filename}"')
+                    message.attach(part)
+
+                    print(f"[DEBUG] Added attachment: {filename} ({len(file_data)} bytes) - MIME: {mime_type}")
 
         # Encode message
         raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
@@ -83,7 +190,12 @@ def send_email_via_api(access_token, user_email, to, subject, body, is_html=Fals
                 data["threadId"] = thread_id
                 print(f"[DEBUG] Using thread_id as-is: {thread_id}")
 
+        print(f"[DEBUG] Sending email with {len(attachments) if attachments else 0} attachments")
+        print(f"[DEBUG] Message size: {len(raw_message)} bytes")
+
         response = requests.post(url, headers=headers, json=data)
+
+        print(f"[DEBUG] Gmail API response status: {response.status_code}")
 
         if response.status_code == 200:
             # Get the sent message details to extract Message-ID
@@ -140,9 +252,14 @@ def send_email_via_api(access_token, user_email, to, subject, body, is_html=Fals
         elif response.status_code == 403:
             raise Exception("Utilstrækkelige tilladelser til at sende email.")
         else:
-            error_data = response.json()
-            error_msg = error_data.get('error', {}).get('message', 'Ukendt fejl')
-            raise Exception(f"Gmail API fejl: {error_msg}")
+            try:
+                error_data = response.json()
+                error_msg = error_data.get('error', {}).get('message', 'Ukendt fejl')
+                print(f"[DEBUG] Gmail API error response: {error_data}")
+                raise Exception(f"Gmail API fejl: {error_msg}")
+            except:
+                print(f"[DEBUG] Raw error response: {response.text}")
+                raise Exception(f"Gmail API fejl (status {response.status_code}): {response.text[:200]}")
 
     except requests.RequestException as e:
         raise Exception(f"Netværksfejl ved email afsendelse: {str(e)}")

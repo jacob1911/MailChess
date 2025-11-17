@@ -27,9 +27,9 @@ def allowed_file(filename):
         None - standalone validation function
 
     Allowed Extensions:
-        png, jpg, jpeg, gif, svg
+        png, jpg, jpeg, gif, svg, pdf, doc, docx, xls, xlsx, txt, zip, pgn
     """
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg'}
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'zip', 'pgn'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Register Jinja2 filter for cleaning message bodies
@@ -261,6 +261,21 @@ def thread(thread_id):
         move_uci = request.form.get("move")
         is_html = request.form.get("is_html") == "true"
 
+        # Get attachments from request
+        attachments = []
+        if 'attachments' in request.files:
+            files = request.files.getlist('attachments')
+            for file in files:
+                if file and file.filename:
+                    # Validate file extension
+                    if allowed_file(file.filename):
+                        attachments.append(file)
+                        print(f"[DEBUG] Attachment added for processing: {file.filename}")
+                    else:
+                        flash(f"Filtype ikke tilladt: {file.filename}", "warning")
+
+        print(f"[DEBUG] Total attachments to send: {len(attachments)}")
+
         # Ensure we have a recipient
         if not other:
             flash("No recipient found for this thread", "error")
@@ -325,7 +340,8 @@ def thread(thread_id):
                 is_html=is_html,
                 in_reply_to=in_reply_to,
                 references=references,
-                thread_id=gmail_thread_id
+                thread_id=gmail_thread_id,
+                attachments=attachments  # Pass attachments to Gmail API
             )
 
             # Now save message with Gmail IDs
@@ -376,6 +392,9 @@ def thread(thread_id):
                 flash("Email sent but couldn't save to database", "warning")
 
         except Exception as e:
+            print(f"[ERROR] Email send failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
             flash(f"Fejl ved afsendelse: {str(e)}", "error")
 
         return redirect(url_for("mail.thread", thread_id=thread_id))

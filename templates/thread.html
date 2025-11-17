@@ -349,7 +349,7 @@
 
                 <!-- Reply Form (Hidden) -->
                 <div id="replyForm" class="hidden mt-4">
-                    <form method="POST" id="messageForm" class="space-y-4">
+                    <form method="POST" id="messageForm" class="space-y-4" enctype="multipart/form-data">
                         <div>
                             <label class="block text-gray-700 font-semibold mb-2">Din besked</label>
                             <!-- Quill editor container -->
@@ -359,6 +359,30 @@
                         </div>
                         <input type="hidden" name="move" id="moveInput" />
                         <input type="hidden" name="is_html" value="true" />
+
+                        <!-- File attachment input -->
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">
+                                <i class="fas fa-paperclip mr-2"></i>Vedhæft filer (PDF, billeder)
+                            </label>
+                            <input type="file"
+                                   name="attachments"
+                                   id="fileInput"
+                                   multiple
+                                   accept=".pdf,.png,.jpg,.jpeg,.gif,.svg,.doc,.docx,.xls,.xlsx,.txt,.zip,.pgn"
+                                   class="block w-full text-sm text-gray-500
+                                          file:mr-4 file:py-2 file:px-4
+                                          file:rounded-full file:border-0
+                                          file:text-sm file:font-semibold
+                                          file:bg-indigo-50 file:text-indigo-700
+                                          hover:file:bg-indigo-100
+                                          cursor-pointer" />
+                            <p class="mt-1 text-xs text-gray-500">
+                                Tilladte filtyper: PDF, Word, Excel, Tekst, Billeder, ZIP, PGN (maks 10MB per fil)
+                            </p>
+                            <div id="fileList" class="mt-2 text-sm text-gray-600"></div>
+                        </div>
+
                         <div class="flex space-x-3">
                             <button type="submit"
                                 class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition duration-200">
@@ -472,6 +496,43 @@
                 quill.setText('');
             }
         }
+
+        // Display selected files
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const fileList = document.getElementById('fileList');
+            const files = e.target.files;
+
+            if (files.length > 0) {
+                let html = '<div class="space-y-1">';
+                html += '<p class="font-semibold">Valgte filer:</p>';
+                for (let i = 0; i < files.length; i++) {
+                    const sizeKB = (files[i].size / 1024).toFixed(1);
+                    const sizeMB = (files[i].size / (1024 * 1024)).toFixed(2);
+                    const sizeText = files[i].size > 1024 * 1024 ? `${sizeMB} MB` : `${sizeKB} KB`;
+
+                    // Determine icon based on file extension
+                    const fileName = files[i].name.toLowerCase();
+                    let icon = 'fa-file';
+                    if (fileName.endsWith('.pdf')) icon = 'fa-file-pdf';
+                    else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) icon = 'fa-file-word';
+                    else if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) icon = 'fa-file-excel';
+                    else if (fileName.endsWith('.txt')) icon = 'fa-file-alt';
+                    else if (fileName.endsWith('.zip')) icon = 'fa-file-archive';
+                    else if (fileName.endsWith('.pgn')) icon = 'fa-chess-board';
+                    else if (fileName.match(/\.(png|jpg|jpeg|gif|svg)$/)) icon = 'fa-file-image';
+
+                    html += `<div class="flex items-center space-x-2 text-sm">
+                        <i class="fas ${icon} text-indigo-600"></i>
+                        <span>${files[i].name}</span>
+                        <span class="text-gray-400">(${sizeText})</span>
+                    </div>`;
+                }
+                html += '</div>';
+                fileList.innerHTML = html;
+            } else {
+                fileList.innerHTML = '';
+            }
+        });
 
         // Typewriter effect function
         function typeWriter(text, elementId, speed = 30) {
