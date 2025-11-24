@@ -432,6 +432,12 @@ def caesar_decrypt(text, shift=3):
     return caesar_encrypt(text, -shift)
 
 
+# Function to generate the Base64-encoded string for IMAP XOAUTH2 authentication
+def generate_oauth2_string(user_email, access_token):
+    auth_string = f'user={user_email}\1auth=Bearer {access_token}\1\1'
+    return base64.b64encode(auth_string.encode('utf-8'))
+
+
 def fetch_new_threads(user_id, user_email, access_token, count=5):
     """
     Fetch last X new email threads from Gmail that don't exist in local database
@@ -445,8 +451,9 @@ def fetch_new_threads(user_id, user_email, access_token, count=5):
 
     try:
         imap = imaplib.IMAP4_SSL("imap.gmail.com", port=993)
-        auth_string = f"user={user_email}\1auth=Bearer {access_token}\1\1"
-        imap.authenticate("XOAUTH2", lambda x: auth_string.encode("utf-8"))
+        # Use helper to generate Base64-encoded XOAUTH2 auth string (bytes)
+        auth_string = generate_oauth2_string(user_email, access_token)
+        imap.authenticate("XOAUTH2", lambda x: auth_string)
         imap.select("INBOX")
 
         # Get all email IDs
@@ -621,8 +628,9 @@ def sync_existing_threads(user_id, user_email, access_token):
 
     try:
         imap = imaplib.IMAP4_SSL("imap.gmail.com", port=993)
-        auth_string = f"user={user_email}\1auth=Bearer {access_token}\1\1"
-        imap.authenticate("XOAUTH2", lambda x: auth_string.encode("utf-8"))
+        # Use helper to generate Base64-encoded XOAUTH2 auth string (bytes)
+        auth_string = generate_oauth2_string(user_email, access_token)
+        imap.authenticate("XOAUTH2", lambda x: auth_string)
         imap.select("INBOX")
 
         # Get all existing threads from database for this user
