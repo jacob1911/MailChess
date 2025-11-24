@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mail Statistics</title>
+</head>
+<body>
+  <h1>Mail Statistics</h1>
+  <ul>
+    <li>Total Emails: {{ total }}</li>
+    <li>Read: {{ read }}</li>
+    <li>Unread: {{ unread }}</li>
+    <li>Most Sent Sender: {{ most_sender[0] }} ({{ most_sender[1] }} sent)</li>
+    <li>Most Sent Receiver: {{ most_receiver[0] }} ({{ most_receiver[1] }} received)</li>
+  </ul>
+</body>
+</html>
