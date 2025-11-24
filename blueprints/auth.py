@@ -12,14 +12,14 @@ def init_oauth(oauth_instance):
     oauth = oauth_instance
 
 
-@auth_bp.route("/login")
-def login():
-    # Check if user is already logged in
-    if session.get("user"):
-        return redirect(url_for("mail.inbox"))
-
-    # Show login page
-    return render_template("login.html")
+@auth_bp.route("/logout")
+def logout():
+    """Logout user and clear session"""
+    session.pop("user", None)
+    session.pop("access_token", None) # Ensure token is removed
+    # If you store the refresh token, remove that too
+    session.clear() 
+    return redirect(url_for("auth.login"))
 
 
 @auth_bp.route("/login/google")
@@ -68,9 +68,3 @@ def auth_callback():
     session["access_token"] = access_token
     return redirect(url_for("mail.inbox"))
 
-
-@auth_bp.route("/logout")
-def logout():
-    """Logout user and clear session"""
-    session.clear()
-    return redirect(url_for("auth.login"))

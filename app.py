@@ -32,15 +32,16 @@ db.init_app(app)
 
 # Initialize OAuth
 oauth = OAuth(app)
+# In app.py, change the scope parameter in oauth.register(...)
 oauth.register(
     name="google",
-    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
-    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
-    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-    client_kwargs={
-        "scope": "openid email profile https://mail.google.com/",
-        "access_type": "offline",
-        "prompt": "consent"  # Force consent screen to update permissions
+    # ... other client details ...
+    # In app.py, change the scope parameter in oauth.register(...)
+client_kwargs={
+    # CHANGE BACK TO THIS:
+    "scope": "openid email profile https://mail.google.com/", 
+    "access_type": "offline",
+    "prompt": "consent" 
     }
 )
 
