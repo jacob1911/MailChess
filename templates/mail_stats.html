@@ -1,16 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
+  <meta charset="utf-8"/>
   <title>Mail Statistics</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .stat { margin: 8px 0; }
+  </style>
 </head>
 <body>
   <h1>Mail Statistics</h1>
-  <ul>
-    <li>Total Emails: {{ total }}</li>
-    <li>Read: {{ read }}</li>
-    <li>Unread: {{ unread }}</li>
-    <li>Most Sent Sender: {{ most_sender[0] }} ({{ most_sender[1] }} sent)</li>
-    <li>Most Sent Receiver: {{ most_receiver[0] }} ({{ most_receiver[1] }} received)</li>
-  </ul>
+  <div class="stat">Total Emails: {{ total }}</div>
+  <div class="stat">Read: {{ read }}</div>
+  <div class="stat">Unread: {{ unread }}</div>
+  <div class="stat">Most Sent Sender: {{ most_sender[0] }} ({{ most_sender[1] }})</div>
+  <div class="stat">Most Sent Receiver: {{ most_receiver[0] }} ({{ most_receiver[1] }})</div>
 </body>
 </html>

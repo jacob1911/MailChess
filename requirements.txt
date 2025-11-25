@@ -28,3 +28,6 @@ openai==1.6.1
 # Utilities
 Werkzeug==3.0.1
 requests==2.31.0
+
+# GUI (if needed)
+pywebview>=3.0
