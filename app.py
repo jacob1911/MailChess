@@ -39,8 +39,10 @@ db.init_app(app)
 oauth = OAuth(app)
 oauth.register(
     name="google",
+    # --- CRITICAL FIX: Include client_id and client_secret here ---
     client_id=os.environ.get("GOOGLE_CLIENT_ID"),
     client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    # ---------------------------------------------------------------
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={
         # Full scope for Sending AND Reading (IMAP)

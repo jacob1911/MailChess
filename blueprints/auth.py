@@ -19,8 +19,17 @@ def logout():
     session.pop("access_token", None) # Ensure token is removed
     # If you store the refresh token, remove that too
     session.clear() 
-    return redirect(url_for("auth.login"))
+    # FIX: Redirect to the correctly named endpoint
+    return redirect(url_for("auth.auth_login_page"))
 
+@auth_bp.route("/login")
+def auth_login_page():
+    # Check if user is already logged in
+    if session.get("user"):
+        return redirect(url_for("mail.inbox"))
+    
+    # Show login page
+    return render_template("login.html")
 
 @auth_bp.route("/login/google")
 def login_google():

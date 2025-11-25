@@ -1,5 +1,6 @@
 # desktop_main.py
-# Place at repo root. Adjust import to your real app factory or blueprint registration.
+# Entrypoint to run the project's Flask app locally and open it in a native window (pywebview).
+# Recommended location: repo root (MailChess/desktop_main.py)
 
 import threading
 import time
@@ -7,30 +8,33 @@ import socket
 import sys
 import webview
 
-# Try to use waitress as a more stable embedded server in packaged apps
-try:
-    from waitress import serve as waitress_serve
-    HAVE_WAITRESS = True
-except Exception:
-    HAVE_WAITRESS = False
-
-# Import/create your Flask app here. If you already have create_app(), import it.
-# Example: from mail_stats import create_app
-# Replace with the real import in your repo.
-from mail_stats import create_app
+# ADDED specific imports needed for the direct app import
+from flask import session 
+from app import app # <-- DIRECTLY IMPORTING THE APP INSTANCE
 
 HOST = "127.0.0.1"
 PORT = 5000
-URL = f"http://{HOST}:{PORT}/"        # main page
-MAIL_STATS_ROUTE = f"http://{HOST}:{PORT}/mail_stats"  # specific stats route
+ROOT_URL = f"http://{HOST}:{PORT}/"
 
-def start_flask_with_waitress(app, host, port):
-    # waitress will block; run in a thread
-    waitress_serve(app, host=host, port=port)
-
-def start_flask_dev(app, host, port):
-    # Flask dev server (threaded) — acceptable for a local desktop app
-    app.run(host=host, port=port, debug=False, threaded=True)
+# --- MODIFIED FUNCTION ---
+def import_app():
+    """
+    Directly returns the Flask app object imported from the app module.
+    """
+    try:
+        # Since we imported 'app' directly above, we just return it.
+        # Ensure session is imported globally for context management.
+        return app
+    except ImportError as e:
+        # This block should be caught by the general exception handler above.
+        raise ImportError(
+            f"Could not import Flask app: {e}"
+        ) from e
+    except Exception as e:
+        # Re-raise initialization crashes (e.g., missing keys)
+        print(f"CRITICAL APP INIT ERROR: {e}", file=sys.stderr)
+        raise e
+# --- END MODIFIED FUNCTION ---
 
 def is_port_open(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -41,11 +45,17 @@ def is_port_open(host, port):
         except Exception:
             return False
 
+def run_flask(app):
+    # Prefer waitress if available in bundled environment
+    try:
+        from waitress import serve
+        serve(app, host=HOST, port=PORT)
+    except Exception:
+        # Dev server is fine for a local desktop app
+        app.run(host=HOST, port=PORT, debug=False, threaded=True)
+
 def run_server_in_thread(app):
-    if HAVE_WAITRESS:
-        t = threading.Thread(target=start_flask_with_waitress, args=(app, HOST, PORT), daemon=True)
-    else:
-        t = threading.Thread(target=start_flask_dev, args=(app, HOST, PORT), daemon=True)
+    t = threading.Thread(target=run_flask, args=(app,), daemon=True)
     t.start()
     return t
 
@@ -58,24 +68,22 @@ def wait_for_server(host, port, timeout=10.0):
     return False
 
 def main():
-    app = create_app()  # your factory that registers routes and templates
-    server_thread = run_server_in_thread(app)
+    try:
+        # The app object is now imported and returned directly
+        app = import_app() 
+    except Exception as e:
+        print("ERROR importing app:", e, file=sys.stderr)
+        sys.exit(1)
 
-    # Wait until server is ready (health-check)
+    run_server_in_thread(app)
+
     if not wait_for_server(HOST, PORT, timeout=10.0):
         print(f"ERROR: server did not start on {HOST}:{PORT}", file=sys.stderr)
         sys.exit(1)
 
-    # Choose which URL to open (main or mail stats)
-    open_url = MAIL_STATS_ROUTE  # change to URL if you want root page
-
-    # Create a native window that loads the local web app
-    window = webview.create_window("MailChess", open_url, width=1100, height=780)
-    webview.start()  # blocks until window is closed
-
-    # When window closes, exit — server thread is daemon so process ends
-    sys.exit(0)
+    # Open the root so the window uses your existing base.html and UI
+    window = webview.create_window("MailChess", ROOT_URL, width=1100, height=780, resizable=True)
+    webview.start()
 
 if __name__ == "__main__":
     main()
-
