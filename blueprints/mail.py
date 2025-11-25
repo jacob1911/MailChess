@@ -91,7 +91,7 @@ def inbox():
         - custom_labels: All custom labels for current user
     """
     if session.get("user") is None:
-        return redirect(url_for("auth.login"))
+        return redirect(url_for("auth.auth_login_page"))
 
     user = session.get("user")
     user_id = user.get("id")
@@ -215,7 +215,7 @@ def thread(thread_id):
         - If new thread: Uses recipient from session storage
     """
     if session.get("user") is None:
-        return redirect(url_for("auth.login"))
+        return redirect(url_for("auth.auth_login_page"))
 
     user = session.get("user")
     user_id = user.get("id")

@@ -38,7 +38,7 @@ def login_google():
     return oauth.google.authorize_redirect(redirect_uri)
 
 
-@auth_bp.route("/auth/callback")
+@auth_bp.route("/callback")
 def auth_callback():
     token = oauth.google.authorize_access_token()
     access_token = token["access_token"]
