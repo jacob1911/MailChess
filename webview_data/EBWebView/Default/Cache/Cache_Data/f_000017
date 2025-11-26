@@ -1009,6 +1009,67 @@
                         </div>
                     </div>
                     
+                    
+                    
+                    <div class="relative group thread-item" data-labels="">
+                        <a href="/thread/13"
+                            class="block p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition duration-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3 flex-1">
+                                    <div
+                                        class="bg-indigo-100 text-indigo-600 rounded-full w-10 h-10 flex items-center justify-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <div class="flex items-center space-x-2">
+                                                <p class="font-semibold text-gray-800">Test ordliste</p>
+                                                <div class="flex space-x-1">
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-sm text-gray-600">
+                                                
+                                                Ingen beskeder endnu
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs text-gray-500 whitespace-nowrap">
+                                        
+                                    </span>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                            </div>
+                        </a>
+                        <!-- Label action buttons (shown on hover) -->
+                        <div
+                            class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
+                            <button onclick="toggleLabel(event, 13, 'STARRED')"
+                                class="p-2 hover:bg-yellow-50 rounded transition duration-200" title="Stjerne">
+                                <i class="fas fa-star text-yellow-500"></i>
+                            </button>
+                            <button onclick="toggleLabel(event, 13, 'IMPORTANT')"
+                                class="p-2 hover:bg-red-50 rounded transition duration-200" title="Vigtig">
+                                <i class="fas fa-exclamation text-red-500"></i>
+                            </button>
+                            <button onclick="markAsRead(event, 13)"
+                                class="p-2 hover:bg-blue-50 rounded transition duration-200" title="Marker som læst">
+                                <i class="fas fa-envelope-open text-blue-500"></i>
+                            </button>
+                            <div class="relative">
+                                <button onclick="toggleCustomLabelMenu(event, 13)"
+                                    class="p-2 hover:bg-purple-50 rounded transition duration-200"
+                                    title="Custom labels">
+                                    <i class="fas fa-tags text-purple-500"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
                 
             </div>
