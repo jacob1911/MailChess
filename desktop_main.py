@@ -1,11 +1,11 @@
 # desktop_main.py
 # Entrypoint to run the project's Flask app locally and open it in a native window (pywebview).
-# Recommended location: repo root (MailChess/desktop_main.py)
 
 import threading
 import time
 import socket
 import sys
+import os
 import webview
 
 # ADDED specific imports needed for the direct app import
@@ -23,15 +23,12 @@ def import_app():
     """
     try:
         # Since we imported 'app' directly above, we just return it.
-        # Ensure session is imported globally for context management.
         return app
     except ImportError as e:
-        # This block should be caught by the general exception handler above.
         raise ImportError(
             f"Could not import Flask app: {e}"
         ) from e
     except Exception as e:
-        # Re-raise initialization crashes (e.g., missing keys)
         print(f"CRITICAL APP INIT ERROR: {e}", file=sys.stderr)
         raise e
 # --- END MODIFIED FUNCTION ---
@@ -69,7 +66,6 @@ def wait_for_server(host, port, timeout=10.0):
 
 def main():
     try:
-        # The app object is now imported and returned directly
         app = import_app() 
     except Exception as e:
         print("ERROR importing app:", e, file=sys.stderr)
@@ -81,9 +77,19 @@ def main():
         print(f"ERROR: server did not start on {HOST}:{PORT}", file=sys.stderr)
         sys.exit(1)
 
-    # Open the root so the window uses your existing base.html and UI
+    # Define a persistent storage path for the webview data (cookies, cache)
+    # This ensures that "Remember Me" works across app restarts
+    user_data_dir = os.path.join(os.getcwd(), 'webview_data')
+    if not os.path.exists(user_data_dir):
+        os.makedirs(user_data_dir)
+
+    # Create window with explicit user data folder
+    # Using private_mode=False ensures data persistence
     window = webview.create_window("MailChess", ROOT_URL, width=1100, height=780, resizable=True)
-    webview.start()
+    
+    # Note: some versions of pywebview set private_mode=True by default on start
+    # We pass private_mode=False to ensure persistence
+    webview.start(private_mode=False, storage_path=user_data_dir)
 
 if __name__ == "__main__":
     main()

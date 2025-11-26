@@ -59,6 +59,14 @@
                         <i class="fas fa-plus mr-2"></i>
                         Ny tråd
                     </button>
+                    
+                    <!-- NEW: Stats Button -->
+                    <a href="{{ url_for('stats.index') }}"
+                        class="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center"
+                        title="Statistik">
+                        <i class="fas fa-chart-pie"></i>
+                    </a>
+
                     <button onclick="toggleLabelManager()"
                         class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center"
                         title="Administrer labels">
@@ -859,17 +867,17 @@
 
         // Filter threads by label
         function filterThreads() {
-            const filterValue = document.getElementById('labelFilter').value;
+            const filterValue = document.getElementById('labelFilter');
             const threadItems = document.querySelectorAll('.thread-item');
 
             threadItems.forEach(item => {
-                if (!filterValue) {
+                if (!filterValue.value) {
                     // Show all threads if no filter selected
                     item.style.display = '';
                 } else {
                     // Check if thread has the selected label
                     const labels = item.getAttribute('data-labels');
-                    if (labels && labels.split(',').includes(filterValue)) {
+                    if (labels && labels.split(',').includes(filterValue.value)) {
                         item.style.display = '';
                     } else {
                         item.style.display = 'none';

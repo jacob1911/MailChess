@@ -1,19 +1,179 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  <title>Mail Statistics</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .stat { margin: 8px 0; }
-  </style>
-</head>
-<body>
-  <h1>Mail Statistics</h1>
-  <div class="stat">Total Emails: {{ total }}</div>
-  <div class="stat">Read: {{ read }}</div>
-  <div class="stat">Unread: {{ unread }}</div>
-  <div class="stat">Most Sent Sender: {{ most_sender[0] }} ({{ most_sender[1] }})</div>
-  <div class="stat">Most Sent Receiver: {{ most_receiver[0] }} ({{ most_receiver[1] }})</div>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}MailChess - Statistik{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+            <i class="fas fa-chart-pie text-indigo-600 mr-3"></i>
+            Mail Statistik
+        </h1>
+        <p class="text-gray-600 mt-1">Oversigt over din mailboks aktivitet</p>
+    </div>
+
+    <!-- Basic Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        
+        <!-- Total -->
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-semibold text-gray-500 uppercase">Total Beskeder</p>
+                    <h2 class="text-3xl font-bold text-gray-800 mt-2">{{ total }}</h2>
+                </div>
+                <div class="p-3 bg-blue-100 rounded-full text-blue-600">
+                    <i class="fas fa-envelope fa-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Unread -->
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-500">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-semibold text-gray-500 uppercase">Ulæste</p>
+                    <h2 class="text-3xl font-bold text-gray-800 mt-2">{{ unread }}</h2>
+                </div>
+                <div class="p-3 bg-yellow-100 rounded-full text-yellow-600">
+                    <i class="fas fa-envelope-open-text fa-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Read -->
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-semibold text-gray-500 uppercase">Læste</p>
+                    <h2 class="text-3xl font-bold text-gray-800 mt-2">{{ read }}</h2>
+                </div>
+                <div class="p-3 bg-green-100 rounded-full text-green-600">
+                    <i class="fas fa-check-double fa-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sent by You -->
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-indigo-500">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-semibold text-gray-500 uppercase">Sendt af dig</p>
+                    <h2 class="text-3xl font-bold text-gray-800 mt-2">{{ sent_count }}</h2>
+                </div>
+                <div class="p-3 bg-indigo-100 rounded-full text-indigo-600">
+                    <i class="fas fa-paper-plane fa-lg"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Network Stats -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        
+        <!-- Top Sender -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-inbox text-indigo-500 mr-2"></i>
+                Top Afsender
+            </h3>
+            <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                <div class="bg-indigo-100 text-indigo-600 w-12 h-12 rounded-full flex items-center justify-center mr-4 text-xl font-bold">
+                    {{ most_sender[0][0]|upper if most_sender[0] else '?' }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate">
+                        {{ most_sender[0] }}
+                    </p>
+                    <p class="text-sm text-gray-500">
+                        Har sendt dig <span class="font-bold text-gray-700">{{ most_sender[1] }}</span> beskeder
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Recipient -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-paper-plane text-green-500 mr-2"></i>
+                Top Modtager
+            </h3>
+            <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                <div class="bg-green-100 text-green-600 w-12 h-12 rounded-full flex items-center justify-center mr-4 text-xl font-bold">
+                    {{ most_receiver[0][0]|upper if most_receiver[0] else '?' }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate">
+                        {{ most_receiver[0] }}
+                    </p>
+                    <p class="text-sm text-gray-500">
+                        Du har sendt <span class="font-bold text-gray-700">{{ most_receiver[1] }}</span> beskeder
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text Analysis Section -->
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <i class="fas fa-brain text-purple-600 mr-3"></i> Sprog Analyse (Dine E-mails)
+    </h2>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Most Frequent Words -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Mest Brugte Ord</h3>
+            <div class="space-y-3">
+                {% for word, count in top_words %}
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700 font-medium capitalize">{{ word }}</span>
+                    <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">{{ count }}</span>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm italic text-center py-4">Ingen data endnu</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Most Frequent Starters -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Mest Brugte Start</h3>
+            <div class="space-y-3">
+                {% for starter, count in top_starters %}
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700 font-medium italic">"{{ starter }}..."</span>
+                    <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-bold">{{ count }}</span>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm italic text-center py-4">Ingen data endnu</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- "Special" Words (Slurs/Bad Words) -->
+        <div class="bg-white rounded-lg shadow-lg p-6 border-t-4 border-red-500">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center">
+                <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Sprogbrug
+            </h3>
+            <p class="text-xs text-gray-500 mb-4">Ord fra din overvågningsliste</p>
+            <div class="space-y-3">
+                {% for word, count in top_bad_words %}
+                <div class="flex justify-between items-center bg-red-50 p-2 rounded">
+                    <span class="text-red-700 font-medium capitalize">{{ word }}</span>
+                    <span class="bg-red-200 text-red-800 px-2 py-1 rounded text-xs font-bold">{{ count }}</span>
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-check-circle text-green-500 text-4xl mb-2"></i>
+                    <p class="text-gray-600 text-sm mt-2">Ingen fundet!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -15,6 +15,7 @@ print("---------------------------------------------------")
 from models import db
 from blueprints.auth import auth_bp, init_oauth
 from blueprints.mail import mail_bp
+from blueprints.stats import stats_bp  # Import the new stats blueprint
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -31,6 +32,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=31)
 # --- BLUEPRINT REGISTRATION ---
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(mail_bp, url_prefix='/')
+app.register_blueprint(stats_bp, url_prefix='/mail_stats') # Register the stats blueprint
 # ------------------------------
 
 # Upload configuration
