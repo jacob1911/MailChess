@@ -1375,3 +1375,46 @@ def delete_custom_label(label_id):
             "success": False,
             "error": f"Failed to delete label: {str(e)}"
         }), 500
+
+@mail_bp.route("/api/contacts", methods=["GET"])
+def get_contacts():
+    """
+    API endpoint to fetch unique contacts (email addresses) for autocomplete.
+    Returns a list of email addresses from messages the user has sent or received.
+    """
+    if session.get("user") is None:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user = session.get("user")
+    user_id = user.get("id")
+    user_email = user.get("email")
+
+    # Fetch all distinct senders and recipients associated with this user's messages
+    # We exclude the user's own email from the list
+    
+    # 1. Get all people who sent emails TO the user
+    senders = db.session.query(Message.sender).filter(
+        Message.user_id == user_id,
+        Message.sender != user_email
+    ).distinct().all()
+
+    # 2. Get all people the user sent emails TO
+    recipients = db.session.query(Message.recipient).filter(
+        Message.user_id == user_id,
+        Message.recipient != user_email
+    ).distinct().all()
+
+    # Combine and clean up the list
+    contacts = set()
+    
+    for r in senders + recipients:
+        email_addr = r[0]
+        # Simple cleanup to extract just the email if it's in "Name <email>" format
+        # (Though your extract_email_address utility usually handles this before saving)
+        if email_addr:
+            contacts.add(email_addr)
+
+    return jsonify({
+        "success": True,
+        "contacts": sorted(list(contacts))
+    }), 200

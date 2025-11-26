@@ -21,7 +21,7 @@ STOP_WORDS = {
 # --- CONFIGURATION: Add your list of "slurs" or bad words here ---
 # WARNING: This list is case-insensitive.
 BAD_WORDS_LIST = {
-    "idiot", "stupid", "fjols", "taber", "skod", "lort", "fuck", "sgu", "helvede"
+    "idiot", "stupid", "fjols", "taber", "skod", "lort", "fuck", "sgu", "helvede", "pik", "fisse", "bøsse", "luder", "nigga", "nigger", "spick", "gayboy"
     # Add the specific words you want to track here
 }
 
