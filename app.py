@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, session, redirect, url_for
 from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
+from datetime import timedelta
 
 # Load environment variables FIRST (before importing blueprints)
 load_dotenv('environ.env', override=True)
@@ -22,6 +23,10 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "instance", "mailchess.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret")
+
+# This keeps the login cookie valid for 31 days if requested
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=31)
+# --------------------------------------
 
 # --- BLUEPRINT REGISTRATION ---
 app.register_blueprint(auth_bp, url_prefix='/auth')

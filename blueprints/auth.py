@@ -1,50 +1,47 @@
-from flask import Blueprint, redirect, url_for, session, render_template
+from flask import Blueprint, redirect, url_for, session, render_template, request # <-- ADDED request
 from authlib.integrations.flask_client import OAuth
 from models import db, User
 
 auth_bp = Blueprint('auth', __name__)
 
-# OAuth will be initialized in app.py and passed here
 oauth = None
 
 def init_oauth(oauth_instance):
     global oauth
     oauth = oauth_instance
 
-
 @auth_bp.route("/logout")
 def logout():
     """Logout user and clear session"""
     session.pop("user", None)
-    session.pop("access_token", None) # Ensure token is removed
-    # If you store the refresh token, remove that too
+    session.pop("access_token", None)
     session.clear() 
-    # FIX: Redirect to the correctly named endpoint
     return redirect(url_for("auth.auth_login_page"))
 
 @auth_bp.route("/login")
 def auth_login_page():
-    # Check if user is already logged in
     if session.get("user"):
         return redirect(url_for("mail.inbox"))
-    
-    # Show login page
     return render_template("login.html")
 
 @auth_bp.route("/login/google")
 def login_google():
     """Actual OAuth redirect"""
+    # --- NEW: Check if 'Remember Me' was checked ---
+    if request.args.get('remember_me'):
+        session['remember_me_temp'] = True
+    # -----------------------------------------------
+
     redirect_uri = url_for("auth.auth_callback", _external=True)
     return oauth.google.authorize_redirect(redirect_uri)
-
 
 @auth_bp.route("/callback")
 def auth_callback():
     token = oauth.google.authorize_access_token()
     access_token = token["access_token"]
+    refresh_token = token.get("refresh_token")
     userinfo = token["userinfo"]
 
-    # Get or create user in database
     google_id = userinfo.get("sub")
     email = userinfo.get("email")
     name = userinfo.get("name")
@@ -58,16 +55,18 @@ def auth_callback():
             name=name,
             picture=picture
         )
+        if refresh_token:
+            user.refresh_token = refresh_token
         db.session.add(user)
         db.session.commit()
     else:
-        # Update user info if changed
+        if refresh_token:
+            user.refresh_token = refresh_token
         user.email = email
         user.name = name
         user.picture = picture
         db.session.commit()
 
-    # Store user info and access token in session
     session["user"] = {
         "id": user.id,
         "email": user.email,
@@ -75,5 +74,12 @@ def auth_callback():
         "picture": user.picture
     }
     session["access_token"] = access_token
-    return redirect(url_for("mail.inbox"))
 
+    # --- NEW: Apply Permanent Session ---
+    if session.pop('remember_me_temp', None):
+        session.permanent = True
+    else:
+        session.permanent = False
+    # ------------------------------------
+
+    return redirect(url_for("mail.inbox"))
