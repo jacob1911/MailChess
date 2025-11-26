@@ -433,9 +433,10 @@ def caesar_decrypt(text, shift=3):
 
 
 # Function to generate the Base64-encoded string for IMAP XOAUTH2 authentication
+# FIXED CODE
 def generate_oauth2_string(user_email, access_token):
-    auth_string = f'user={user_email}\1auth=Bearer {access_token}\1\1'
-    return base64.b64encode(auth_string.encode('utf-8'))
+    auth_string = f"user={user_email}\x01auth=Bearer {access_token}\x01\x01"
+    return auth_string.encode("utf-8")
 
 
 def fetch_new_threads(user_id, user_email, access_token, count=5):

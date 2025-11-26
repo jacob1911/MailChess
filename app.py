@@ -4,7 +4,12 @@ from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 
 # Load environment variables FIRST (before importing blueprints)
-load_dotenv('environ.env')
+load_dotenv('environ.env', override=True)
+
+print("---------------------------------------------------")
+print(f"DEBUG: Loaded Client ID: {os.environ.get('GOOGLE_CLIENT_ID')}")
+print("---------------------------------------------------")
+# ---------------------------
 
 from models import db
 from blueprints.auth import auth_bp, init_oauth
