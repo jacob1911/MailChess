@@ -43,7 +43,6 @@
 
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
         <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
             <div class="flex items-center justify-between">
                 <div>
@@ -60,7 +59,6 @@
                         Ny tråd
                     </button>
                     
-                    <!-- NEW: Stats Button -->
                     <a href="/mail_stats/"
                         class="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center"
                         title="Statistik">
@@ -81,12 +79,10 @@
             </div>
         </div>
 
-        <!-- Flash Messages -->
         
         
         
 
-        <!-- New Thread Form (Hidden by default) -->
         <div id="newThreadForm" class="hidden bg-white rounded-lg shadow-lg p-6 mb-6">
             <h2 class="text-xl font-bold text-gray-800 mb-4">
                 <i class="fas fa-envelope mr-2"></i>
@@ -95,9 +91,14 @@
             <form method="POST" class="space-y-4">
                 <div>
                     <label class="block text-gray-700 font-semibold mb-2">Modtager email</label>
-                    <input type="email" name="new_mail" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="modtager@example.com">
+                    <div class="relative">
+                        <input type="email" name="new_mail" id="recipientInput" required list="contactList"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            placeholder="modtager@example.com" autocomplete="off">
+                        
+                        <datalist id="contactList">
+                            </datalist>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-gray-700 font-semibold mb-2">Emne</label>
@@ -119,7 +120,6 @@
             </form>
         </div>
 
-        <!-- Label Manager (Hidden by default) -->
         <div id="labelManager" class="hidden bg-white rounded-lg shadow-lg p-6 mb-6">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-bold text-gray-800">
@@ -131,7 +131,6 @@
                 </button>
             </div>
 
-            <!-- Create New Label Form -->
             <div class="bg-gray-50 rounded-lg p-4 mb-4">
                 <h3 class="font-semibold text-gray-700 mb-3">Opret nyt label</h3>
                 <form id="createLabelForm" class="space-y-3">
@@ -162,7 +161,6 @@
                 </form>
             </div>
 
-            <!-- Existing Labels List -->
             <div>
                 <h3 class="font-semibold text-gray-700 mb-3">Dine labels</h3>
                 <div id="customLabelsList" class="space-y-2">
@@ -171,7 +169,6 @@
             </div>
         </div>
 
-        <!-- Email Threads -->
         <div class="bg-white rounded-lg shadow-lg p-6">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-bold text-gray-800">
@@ -179,7 +176,6 @@
                     Dine samtaler
                 </h2>
                 <div class="flex space-x-2 items-center">
-                    <!-- Label filter -->
                     <select id="labelFilter" onchange="filterThreads()"
                         class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
                         <option value="">Alle labels</option>
@@ -188,7 +184,6 @@
                         <option value="IMPORTANT">Vigtige</option>
                         <option value="INBOX">I indbakke</option>
                     </select>
-                    <!-- Fetch new threads -->
                     <input type="number" id="threadCount" value="5" min="1" max="50"
                         class="w-16 px-2 py-2 border border-gray-300 rounded-lg text-center">
                     <button id="fetchBtn" onclick="fetchNewThreads()"
@@ -196,13 +191,11 @@
                         <i id="fetchIcon" class="fas fa-download mr-2"></i>
                         Hent tråde
                     </button>
-                    <!-- Sync existing -->
                     <button id="syncBtn" onclick="syncExisting()"
                         class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg transition duration-200 flex items-center text-sm">
                         <i id="syncIcon" class="fas fa-sync-alt mr-2"></i>
                         Synkroniser
                     </button>
-                    <!-- Clear database -->
                     <button id="clearBtn" onclick="clearDatabase()"
                         class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg transition duration-200 flex items-center text-sm">
                         <i id="clearIcon" class="fas fa-trash mr-2"></i>
@@ -211,7 +204,6 @@
                 </div>
             </div>
 
-            <!-- Status Messages -->
             <div id="statusMessage" class="hidden mb-4 p-3 rounded-lg"></div>
 
             <div id="threadsList">
@@ -220,6 +212,395 @@
                 
                 
                 <div class="space-y-2">
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    <div class="relative group thread-item" data-labels="">
+                        <a href="/thread/14"
+                            class="block p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition duration-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3 flex-1">
+                                    <div
+                                        class="bg-indigo-100 text-indigo-600 rounded-full w-10 h-10 flex items-center justify-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <div class="flex items-center space-x-2">
+                                                <p class="font-semibold text-gray-800">Test ordliste2</p>
+                                                <div class="flex space-x-1">
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-sm text-gray-600">
+                                                
+                                                idiot
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs text-gray-500 whitespace-nowrap">
+                                        28/11/25 14:12
+                                    </span>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                            </div>
+                        </a>
+                        <div
+                            class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
+                            <button onclick="toggleLabel(event, 14, 'STARRED')"
+                                class="p-2 hover:bg-yellow-50 rounded transition duration-200" title="Stjerne">
+                                <i class="fas fa-star text-yellow-500"></i>
+                            </button>
+                            <button onclick="toggleLabel(event, 14, 'IMPORTANT')"
+                                class="p-2 hover:bg-red-50 rounded transition duration-200" title="Vigtig">
+                                <i class="fas fa-exclamation text-red-500"></i>
+                            </button>
+                            <button onclick="markAsRead(event, 14)"
+                                class="p-2 hover:bg-blue-50 rounded transition duration-200" title="Marker som læst">
+                                <i class="fas fa-envelope-open text-blue-500"></i>
+                            </button>
+                            <div class="relative">
+                                <button onclick="toggleCustomLabelMenu(event, 14)"
+                                    class="p-2 hover:bg-purple-50 rounded transition duration-200"
+                                    title="Custom labels">
+                                    <i class="fas fa-tags text-purple-500"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    
+                    
+                    
+                    <div class="relative group thread-item" data-labels="">
+                        <a href="/thread/16"
+                            class="block p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition duration-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3 flex-1">
+                                    <div
+                                        class="bg-indigo-100 text-indigo-600 rounded-full w-10 h-10 flex items-center justify-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <div class="flex items-center space-x-2">
+                                                <p class="font-semibold text-gray-800">Bestillingsoversigt fra Matas Webshop</p>
+                                                <div class="flex space-x-1">
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-sm text-gray-600">
+                                                
+                                                <span class="font-medium">webshop</span> -
+                                                
+                                                Matas Webshop .product-item__title-row--...
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs text-gray-500 whitespace-nowrap">
+                                        28/11/25 12:31
+                                    </span>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                            </div>
+                        </a>
+                        <div
+                            class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
+                            <button onclick="toggleLabel(event, 16, 'STARRED')"
+                                class="p-2 hover:bg-yellow-50 rounded transition duration-200" title="Stjerne">
+                                <i class="fas fa-star text-yellow-500"></i>
+                            </button>
+                            <button onclick="toggleLabel(event, 16, 'IMPORTANT')"
+                                class="p-2 hover:bg-red-50 rounded transition duration-200" title="Vigtig">
+                                <i class="fas fa-exclamation text-red-500"></i>
+                            </button>
+                            <button onclick="markAsRead(event, 16)"
+                                class="p-2 hover:bg-blue-50 rounded transition duration-200" title="Marker som læst">
+                                <i class="fas fa-envelope-open text-blue-500"></i>
+                            </button>
+                            <div class="relative">
+                                <button onclick="toggleCustomLabelMenu(event, 16)"
+                                    class="p-2 hover:bg-purple-50 rounded transition duration-200"
+                                    title="Custom labels">
+                                    <i class="fas fa-tags text-purple-500"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    <div class="relative group thread-item" data-labels="">
+                        <a href="/thread/15"
+                            class="block p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition duration-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3 flex-1">
+                                    <div
+                                        class="bg-indigo-100 text-indigo-600 rounded-full w-10 h-10 flex items-center justify-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <div class="flex items-center space-x-2">
+                                                <p class="font-semibold text-gray-800">Payment confirmation</p>
+                                                <div class="flex space-x-1">
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-sm text-gray-600">
+                                                
+                                                <span class="font-medium">payment</span> -
+                                                
+                                                a, a:link, a:visited { text-decoration:n...
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs text-gray-500 whitespace-nowrap">
+                                        28/11/25 06:53
+                                    </span>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                            </div>
+                        </a>
+                        <div
+                            class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
+                            <button onclick="toggleLabel(event, 15, 'STARRED')"
+                                class="p-2 hover:bg-yellow-50 rounded transition duration-200" title="Stjerne">
+                                <i class="fas fa-star text-yellow-500"></i>
+                            </button>
+                            <button onclick="toggleLabel(event, 15, 'IMPORTANT')"
+                                class="p-2 hover:bg-red-50 rounded transition duration-200" title="Vigtig">
+                                <i class="fas fa-exclamation text-red-500"></i>
+                            </button>
+                            <button onclick="markAsRead(event, 15)"
+                                class="p-2 hover:bg-blue-50 rounded transition duration-200" title="Marker som læst">
+                                <i class="fas fa-envelope-open text-blue-500"></i>
+                            </button>
+                            <div class="relative">
+                                <button onclick="toggleCustomLabelMenu(event, 15)"
+                                    class="p-2 hover:bg-purple-50 rounded transition duration-200"
+                                    title="Custom labels">
+                                    <i class="fas fa-tags text-purple-500"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    
+                    
+                    
+                    <div class="relative group thread-item" data-labels="">
+                        <a href="/thread/17"
+                            class="block p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition duration-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3 flex-1">
+                                    <div
+                                        class="bg-indigo-100 text-indigo-600 rounded-full w-10 h-10 flex items-center justify-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <div class="flex items-center space-x-2">
+                                                <p class="font-semibold text-gray-800">It is not too late to provide your opinion on Flying Blue</p>
+                                                <div class="flex space-x-1">
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-sm text-gray-600">
+                                                
+                                                <span class="font-medium">noreply</span> -
+                                                
+                                                ul li, ol li { margin-left:0; } .msohide...
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs text-gray-500 whitespace-nowrap">
+                                        28/11/25 02:40
+                                    </span>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                            </div>
+                        </a>
+                        <div
+                            class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
+                            <button onclick="toggleLabel(event, 17, 'STARRED')"
+                                class="p-2 hover:bg-yellow-50 rounded transition duration-200" title="Stjerne">
+                                <i class="fas fa-star text-yellow-500"></i>
+                            </button>
+                            <button onclick="toggleLabel(event, 17, 'IMPORTANT')"
+                                class="p-2 hover:bg-red-50 rounded transition duration-200" title="Vigtig">
+                                <i class="fas fa-exclamation text-red-500"></i>
+                            </button>
+                            <button onclick="markAsRead(event, 17)"
+                                class="p-2 hover:bg-blue-50 rounded transition duration-200" title="Marker som læst">
+                                <i class="fas fa-envelope-open text-blue-500"></i>
+                            </button>
+                            <div class="relative">
+                                <button onclick="toggleCustomLabelMenu(event, 17)"
+                                    class="p-2 hover:bg-purple-50 rounded transition duration-200"
+                                    title="Custom labels">
+                                    <i class="fas fa-tags text-purple-500"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    
+                    
+                    
+                    <div class="relative group thread-item" data-labels="">
+                        <a href="/thread/19"
+                            class="block p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition duration-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3 flex-1">
+                                    <div
+                                        class="bg-indigo-100 text-indigo-600 rounded-full w-10 h-10 flex items-center justify-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <div class="flex items-center space-x-2">
+                                                <p class="font-semibold text-gray-800">Anne-Mette Hvas - Bestyrelsesmedlem har netop delt noget</p>
+                                                <div class="flex space-x-1">
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-sm text-gray-600">
+                                                
+                                                <span class="font-medium">updates-noreply</span> -
+                                                
+                                                @media (max-width: 512px) { .mercado-con...
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs text-gray-500 whitespace-nowrap">
+                                        26/11/25 22:13
+                                    </span>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                            </div>
+                        </a>
+                        <div
+                            class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
+                            <button onclick="toggleLabel(event, 19, 'STARRED')"
+                                class="p-2 hover:bg-yellow-50 rounded transition duration-200" title="Stjerne">
+                                <i class="fas fa-star text-yellow-500"></i>
+                            </button>
+                            <button onclick="toggleLabel(event, 19, 'IMPORTANT')"
+                                class="p-2 hover:bg-red-50 rounded transition duration-200" title="Vigtig">
+                                <i class="fas fa-exclamation text-red-500"></i>
+                            </button>
+                            <button onclick="markAsRead(event, 19)"
+                                class="p-2 hover:bg-blue-50 rounded transition duration-200" title="Marker som læst">
+                                <i class="fas fa-envelope-open text-blue-500"></i>
+                            </button>
+                            <div class="relative">
+                                <button onclick="toggleCustomLabelMenu(event, 19)"
+                                    class="p-2 hover:bg-purple-50 rounded transition duration-200"
+                                    title="Custom labels">
+                                    <i class="fas fa-tags text-purple-500"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    
+                    
+                    
+                    <div class="relative group thread-item" data-labels="">
+                        <a href="/thread/18"
+                            class="block p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition duration-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3 flex-1">
+                                    <div
+                                        class="bg-indigo-100 text-indigo-600 rounded-full w-10 h-10 flex items-center justify-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <div class="flex items-center space-x-2">
+                                                <p class="font-semibold text-gray-800">Mass =?UTF-8?B?RWZmZWN04oSiOiBBbmRyb21lZGEgRGVsdXhlIEVkaXRpb24gZnJvbSB5?=
+ =?UTF-8?B?b3VyIFN0ZWFtIHdpc2hsaXN0IGlzIG5vdyBvbiBzYWxlIQ==?=</p>
+                                                <div class="flex space-x-1">
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-sm text-gray-600">
+                                                
+                                                <span class="font-medium">noreply</span> -
+                                                
+                                                96 Mass Effect™: Andromeda Deluxe Editio...
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs text-gray-500 whitespace-nowrap">
+                                        26/11/25 16:47
+                                    </span>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                            </div>
+                        </a>
+                        <div
+                            class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
+                            <button onclick="toggleLabel(event, 18, 'STARRED')"
+                                class="p-2 hover:bg-yellow-50 rounded transition duration-200" title="Stjerne">
+                                <i class="fas fa-star text-yellow-500"></i>
+                            </button>
+                            <button onclick="toggleLabel(event, 18, 'IMPORTANT')"
+                                class="p-2 hover:bg-red-50 rounded transition duration-200" title="Vigtig">
+                                <i class="fas fa-exclamation text-red-500"></i>
+                            </button>
+                            <button onclick="markAsRead(event, 18)"
+                                class="p-2 hover:bg-blue-50 rounded transition duration-200" title="Marker som læst">
+                                <i class="fas fa-envelope-open text-blue-500"></i>
+                            </button>
+                            <div class="relative">
+                                <button onclick="toggleCustomLabelMenu(event, 18)"
+                                    class="p-2 hover:bg-purple-50 rounded transition duration-200"
+                                    title="Custom labels">
+                                    <i class="fas fa-tags text-purple-500"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     
                     
                     
@@ -265,7 +646,6 @@
                                 </div>
                             </div>
                         </a>
-                        <!-- Label action buttons (shown on hover) -->
                         <div
                             class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                             <button onclick="toggleLabel(event, 8, 'STARRED')"
@@ -330,7 +710,6 @@
                                 </div>
                             </div>
                         </a>
-                        <!-- Label action buttons (shown on hover) -->
                         <div
                             class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                             <button onclick="toggleLabel(event, 7, 'STARRED')"
@@ -395,7 +774,6 @@
                                 </div>
                             </div>
                         </a>
-                        <!-- Label action buttons (shown on hover) -->
                         <div
                             class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                             <button onclick="toggleLabel(event, 6, 'STARRED')"
@@ -460,7 +838,6 @@
                                 </div>
                             </div>
                         </a>
-                        <!-- Label action buttons (shown on hover) -->
                         <div
                             class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                             <button onclick="toggleLabel(event, 1, 'STARRED')"
@@ -528,7 +905,6 @@
                                 </div>
                             </div>
                         </a>
-                        <!-- Label action buttons (shown on hover) -->
                         <div
                             class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                             <button onclick="toggleLabel(event, 2, 'STARRED')"
@@ -593,7 +969,6 @@
                                 </div>
                             </div>
                         </a>
-                        <!-- Label action buttons (shown on hover) -->
                         <div
                             class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                             <button onclick="toggleLabel(event, 3, 'STARRED')"
@@ -658,7 +1033,6 @@
                                 </div>
                             </div>
                         </a>
-                        <!-- Label action buttons (shown on hover) -->
                         <div
                             class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                             <button onclick="toggleLabel(event, 4, 'STARRED')"
@@ -723,7 +1097,6 @@
                                 </div>
                             </div>
                         </a>
-                        <!-- Label action buttons (shown on hover) -->
                         <div
                             class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                             <button onclick="toggleLabel(event, 5, 'STARRED')"
@@ -789,7 +1162,6 @@
                                 </div>
                             </div>
                         </a>
-                        <!-- Label action buttons (shown on hover) -->
                         <div
                             class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                             <button onclick="toggleLabel(event, 9, 'STARRED')"
@@ -854,7 +1226,6 @@
                                 </div>
                             </div>
                         </a>
-                        <!-- Label action buttons (shown on hover) -->
                         <div
                             class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                             <button onclick="toggleLabel(event, 10, 'STARRED')"
@@ -919,7 +1290,6 @@
                                 </div>
                             </div>
                         </a>
-                        <!-- Label action buttons (shown on hover) -->
                         <div
                             class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                             <button onclick="toggleLabel(event, 11, 'STARRED')"
@@ -984,7 +1354,6 @@
                                 </div>
                             </div>
                         </a>
-                        <!-- Label action buttons (shown on hover) -->
                         <div
                             class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                             <button onclick="toggleLabel(event, 12, 'STARRED')"
@@ -1009,6 +1378,66 @@
                         </div>
                     </div>
                     
+                    
+                    
+                    <div class="relative group thread-item" data-labels="">
+                        <a href="/thread/13"
+                            class="block p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition duration-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3 flex-1">
+                                    <div
+                                        class="bg-indigo-100 text-indigo-600 rounded-full w-10 h-10 flex items-center justify-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <div class="flex items-center space-x-2">
+                                                <p class="font-semibold text-gray-800">Test ordliste</p>
+                                                <div class="flex space-x-1">
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-sm text-gray-600">
+                                                
+                                                Ingen beskeder endnu
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs text-gray-500 whitespace-nowrap">
+                                        
+                                    </span>
+                                    <i class="fas fa-chevron-right text-gray-400"></i>
+                                </div>
+                            </div>
+                        </a>
+                        <div
+                            class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
+                            <button onclick="toggleLabel(event, 13, 'STARRED')"
+                                class="p-2 hover:bg-yellow-50 rounded transition duration-200" title="Stjerne">
+                                <i class="fas fa-star text-yellow-500"></i>
+                            </button>
+                            <button onclick="toggleLabel(event, 13, 'IMPORTANT')"
+                                class="p-2 hover:bg-red-50 rounded transition duration-200" title="Vigtig">
+                                <i class="fas fa-exclamation text-red-500"></i>
+                            </button>
+                            <button onclick="markAsRead(event, 13)"
+                                class="p-2 hover:bg-blue-50 rounded transition duration-200" title="Marker som læst">
+                                <i class="fas fa-envelope-open text-blue-500"></i>
+                            </button>
+                            <div class="relative">
+                                <button onclick="toggleCustomLabelMenu(event, 13)"
+                                    class="p-2 hover:bg-purple-50 rounded transition duration-200"
+                                    title="Custom labels">
+                                    <i class="fas fa-tags text-purple-500"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
                 
             </div>
@@ -1019,9 +1448,34 @@
         // Store custom labels globally
         let customLabels = [];
 
+        async function loadContacts() {
+            try {
+                const response = await fetch('/api/contacts');
+                const data = await response.json();
+
+                if (data.success) {
+                    const dataList = document.getElementById('contactList');
+                    dataList.innerHTML = ''; // Clear existing
+
+                    data.contacts.forEach(email => {
+                        const option = document.createElement('option');
+                        option.value = email;
+                        dataList.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading contacts:', error);
+            }
+        }
+
         function toggleNewThread() {
             const form = document.getElementById('newThreadForm');
             form.classList.toggle('hidden');
+            
+            // Load contacts if we are showing the form
+            if (!form.classList.contains('hidden')) {
+                loadContacts();
+            }
         }
 
         function toggleLabelManager() {
@@ -1416,7 +1870,6 @@
                                         </div>
                                     </div>
                                 </a>
-                                <!-- Label action buttons (shown on hover) -->
                                 <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white rounded-lg shadow-md p-1">
                                     <button onclick="toggleLabel(event, ${thread.id}, 'STARRED')"
                                             class="p-2 hover:bg-yellow-50 rounded transition duration-200"
