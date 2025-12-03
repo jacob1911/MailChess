@@ -70,6 +70,11 @@
                         title="Administrer labels">
                         <i class="fas fa-tags"></i>
                     </button>
+                    <button id="themeToggle" onclick="toggleDarkMode()"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center"
+                        title="Skift tema">
+                        <i id="themeIcon" class="fas fa-moon"></i>
+                    </button>
                     <a href="{{ url_for('auth.logout') }}"
                         class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center"
                         title="Log ud">
@@ -1070,6 +1075,45 @@
         // Load custom labels on page load
         window.addEventListener('DOMContentLoaded', function () {
             loadCustomLabels();
+            // Initialize theme icon based on current document class
+            try {
+                updateThemeIcon();
+            } catch (e) {
+                // ignore if icon not present
+            }
+        });
+
+        // Add this logic inside your existing <script> block
+
+        function updateThemeIcon(isDark) {
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                if (isDark) {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                } else {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                }
+            }
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+
+            if (isDark) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+            updateThemeIcon(isDark);
+        }
+
+        // Initial check to set the correct icon on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const isDark = document.documentElement.classList.contains('dark');
+            updateThemeIcon(isDark);
         });
 
         // Optional: Auto-sync every 5 minutes
