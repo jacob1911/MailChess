@@ -18,11 +18,11 @@
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen">
 
-    <nav class="p-4 bg-white/50 shadow-sm">
+    <nav class="p-4 bg-white/90 shadow-sm dark:bg-gray-800/90">
         <ul class="flex gap-4">
-            <li><a href="/">Home</a></li>
-            <li><a href="/mail_stats">Mail Statistics</a></li>
-        </ul>
+          <li><a href="/" class="text-gray-800 dark:text-gray-200">Home</a></li>
+          <li><a href="/mail_stats" class="text-gray-800 dark:text-gray-200">Mail Statistics</a></li>
+      </ul>
     </nav>
 
     {% block content %}{% endblock %}
