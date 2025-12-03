@@ -390,12 +390,12 @@
                         <span>⚪ White</span>
                     </div>
                     <div>
-                        <input type="range" id="evalSlider" min="-1000" max="1000" step="10" value="26" disabled>
-                        <div id="evalValue">evaluation: 26</div>
+                        <input type="range" id="evalSlider" min="-1000" max="1000" step="10" value="28" disabled>
+                        <div id="evalValue">evaluation: 28</div>
                     </div>
                 </div>
             </div>
-            <p>Stockscore = 26</p>
+            <p>Stockscore = 28</p>
 
         </div>
     </div>
