@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from datetime import datetime, timezone
 from models import db, Thread, Message, User, CustomLabel
 from utils.email_utils import fetch_new_threads, sync_existing_threads, clean_message_body
-from utils.gmail_api import send_email_via_api, modify_message_labels
+from utils.gmail_api import send_email_via_api, modify_message_labels # Keeping import for other functions
 from utils.chess_utils import get_or_create_fen, process_move, update_thread_fen, get_position_evaluation, calculate_won_games
 from werkzeug.utils import secure_filename
 from openai import OpenAI
@@ -10,7 +10,7 @@ import chess
 import os
 import re
 import random
-import email.utils  # <--- CRITICAL FIX: Needed for contact autocomplete
+import email.utils
 
 mail_bp = Blueprint('mail', __name__)
 
@@ -42,11 +42,10 @@ def clean_body_filter(body, is_html=False):
     return clean_message_body(body, is_html)
 
 
-# --- NEW: Wheel of Fortune Logic Helpers ---
-def _execute_wheel_action_logic(user_id, outcome, access_token):
+# --- UPDATED: Wheel of Fortune Logic Helpers (Local Only) ---
+def _execute_wheel_action_logic(user_id, outcome):
     """
-    Executes the action defined by the wheel outcome, updating both
-    the local database and the remote Gmail API.
+    Executes the action defined by the wheel outcome, updating ONLY the local database.
     """
     action = outcome['action']
     target_label = outcome.get('rule_target')
@@ -68,48 +67,29 @@ def _execute_wheel_action_logic(user_id, outcome, access_token):
     messages_to_update = base_query.all()
     
     for msg in messages_to_update:
-        current_labels = set(l.strip() for l in msg.label_ids.split(',') if l.strip())
-        gmail_message_id = msg.gmail_message_id
-        
         updated_local = False
         
-        # 2. Prepare API changes (only if Gmail ID exists)
-        api_add = []
-        api_remove = []
-
         if action == 'delete':
-            # ACTION: DELETE (Trash in Gmail)
-            # In local DB: delete
+            # ACTION: DELETE (Local DB only)
             db.session.delete(msg)
             updated_local = True
-            
-            # In Gmail API: Add trash label
-            api_add.append("TRASH")
         
         elif action == 'label':
-            # ACTION: LABEL CHANGE
+            # ACTION: LABEL CHANGE (Local DB only)
+            current_labels = set(l.strip() for l in msg.label_ids.split(',') if l.strip())
+
             if add_label and add_label not in current_labels:
                 current_labels.add(add_label)
-                api_add.append(add_label)
                 updated_local = True
                 
             if remove_label and remove_label in current_labels:
                 current_labels.discard(remove_label)
-                api_remove.append(remove_label)
                 updated_local = True
                 
             if updated_local:
                 msg.label_ids = ','.join(sorted(current_labels))
 
-        # 3. Execute API call and increment count
-        if gmail_message_id and (api_add or api_remove):
-            try:
-                # Assuming modify_message_labels exists in utils.gmail_api
-                modify_message_labels(access_token, gmail_message_id, api_add, api_remove)
-            except Exception as e:
-                # Log error but continue with DB update if successful
-                print(f"Gmail API label modification failed for {gmail_message_id}: {str(e)}")
-        
+        # 2. Commit local changes
         if updated_local:
             messages_affected += 1
             
@@ -159,21 +139,15 @@ def execute_wheel_action():
 
     user = session.get("user")
     user_id = user.get("id")
-    access_token = session.get("access_token")
+    # access_token is no longer needed here since we are only updating locally
     outcome = request.get_json()
 
     if not outcome:
         return jsonify({"success": False, "error": "Invalid outcome data."}), 400
 
-    if not access_token:
-        return jsonify({
-            "success": False,
-            "error": "Ingen access token. Log venligst ud og ind igen for at udføre handlingen.",
-            "require_reauth": True
-        }), 401
-
     try:
-        messages_affected = _execute_wheel_action_logic(user_id, outcome, access_token)
+        # EXECUTE LOGIC (Purely local database update)
+        messages_affected = _execute_wheel_action_logic(user_id, outcome)
 
         return jsonify({
             "success": True, 
