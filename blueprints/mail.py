@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from datetime import datetime, timezone
 from models import db, Thread, Message, User, CustomLabel
 from utils.email_utils import fetch_new_threads, sync_existing_threads, clean_message_body
-from utils.gmail_api import send_email_via_api
+from utils.gmail_api import send_email_via_api, modify_message_labels
 from utils.chess_utils import get_or_create_fen, process_move, update_thread_fen, get_position_evaluation, calculate_won_games
 from werkzeug.utils import secure_filename
 from openai import OpenAI
@@ -14,6 +14,23 @@ import email.utils  # <--- CRITICAL FIX: Needed for contact autocomplete
 
 mail_bp = Blueprint('mail', __name__)
 
+# --- CONFIGURATION: Wheel of Fortune Rules ---
+WHEEL_RULES = [
+    # Action 1: Delete all UNREAD messages
+    {'weight': 3, 'action': 'delete', 'target': 'UNREAD', 'description': 'Slet ALLE ulæste e-mails!', 'icon': 'trash-alt', 'color': 'text-red-600'},
+    
+    # Action 2: Mark all STARRED messages as IMPORTANT
+    {'weight': 5, 'action': 'label', 'target': 'STARRED', 'add_label': 'IMPORTANT', 'description': 'Alle stjernemarkerede e-mails får IMPORTANT!', 'icon': 'tag', 'color': 'text-blue-500'},
+    
+    # Action 3: Mark all INBOX messages as READ (remove UNREAD)
+    {'weight': 5, 'action': 'label', 'target': 'INBOX', 'remove_label': 'UNREAD', 'description': 'Alle e-mails i indbakken markeres som læst!', 'icon': 'envelope-open', 'color': 'text-green-500'},
+    
+    # Action 4: No action
+    {'weight': 10, 'action': 'none', 'target': None, 'description': 'Intet sker! (Du er heldig)', 'icon': 'hand-paper', 'color': 'text-gray-500'},
+]
+# ---------------------------------------------
+
+
 # Helper function for file uploads
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg'}
@@ -23,6 +40,150 @@ def allowed_file(filename):
 @mail_bp.app_template_filter('clean_body')
 def clean_body_filter(body, is_html=False):
     return clean_message_body(body, is_html)
+
+
+# --- NEW: Wheel of Fortune Logic Helpers ---
+def _execute_wheel_action_logic(user_id, outcome, access_token):
+    """
+    Executes the action defined by the wheel outcome, updating both
+    the local database and the remote Gmail API.
+    """
+    action = outcome['action']
+    target_label = outcome.get('rule_target')
+    add_label = outcome.get('add_label')
+    remove_label = outcome.get('remove_label')
+    
+    messages_affected = 0
+    
+    if action == 'none':
+        return 0
+
+    # 1. Base query: filter by user and target label
+    base_query = Message.query.filter(Message.user_id == user_id)
+    
+    if target_label:
+         # Find messages that CURRENTLY have the target label
+        base_query = base_query.filter(Message.label_ids.like(f"%{target_label}%"))
+
+    messages_to_update = base_query.all()
+    
+    for msg in messages_to_update:
+        current_labels = set(l.strip() for l in msg.label_ids.split(',') if l.strip())
+        gmail_message_id = msg.gmail_message_id
+        
+        updated_local = False
+        
+        # 2. Prepare API changes (only if Gmail ID exists)
+        api_add = []
+        api_remove = []
+
+        if action == 'delete':
+            # ACTION: DELETE (Trash in Gmail)
+            # In local DB: delete
+            db.session.delete(msg)
+            updated_local = True
+            
+            # In Gmail API: Add trash label
+            api_add.append("TRASH")
+        
+        elif action == 'label':
+            # ACTION: LABEL CHANGE
+            if add_label and add_label not in current_labels:
+                current_labels.add(add_label)
+                api_add.append(add_label)
+                updated_local = True
+                
+            if remove_label and remove_label in current_labels:
+                current_labels.discard(remove_label)
+                api_remove.append(remove_label)
+                updated_local = True
+                
+            if updated_local:
+                msg.label_ids = ','.join(sorted(current_labels))
+
+        # 3. Execute API call and increment count
+        if gmail_message_id and (api_add or api_remove):
+            try:
+                # Assuming modify_message_labels exists in utils.gmail_api
+                modify_message_labels(access_token, gmail_message_id, api_add, api_remove)
+            except Exception as e:
+                # Log error but continue with DB update if successful
+                print(f"Gmail API label modification failed for {gmail_message_id}: {str(e)}")
+        
+        if updated_local:
+            messages_affected += 1
+            
+    db.session.commit()
+    return messages_affected
+
+
+@mail_bp.route("/api/spin-wheel", methods=["POST"])
+def spin_wheel():
+    if session.get("user") is None:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user = session.get("user")
+    user_id = user.get("id")
+
+    # 1. Randomly select a rule based on weight
+    weights = [rule['weight'] for rule in WHEEL_RULES]
+    # k=1 ensures a list containing only one chosen element
+    chosen_rule = random.choices(WHEEL_RULES, weights=weights, k=1)[0]
+    
+    # 2. Calculate impact
+    target_count = 0
+    query = Message.query.filter(Message.user_id == user_id)
+
+    if chosen_rule['action'] != 'none' and chosen_rule['target']:
+        target_count = query.filter(Message.label_ids.like(f"%{chosen_rule['target']}%")).count()
+    
+    # 3. Construct the final outcome dictionary
+    outcome = {
+        'action': chosen_rule['action'],
+        'rule_target': chosen_rule.get('target'),
+        'description': chosen_rule['description'],
+        'target_count': target_count,
+        'icon': chosen_rule['icon'],
+        'color': chosen_rule['color'],
+        'add_label': chosen_rule.get('add_label'),
+        'remove_label': chosen_rule.get('remove_label'),
+    }
+
+    return jsonify({"success": True, "outcome": outcome}), 200
+
+
+@mail_bp.route("/api/execute-wheel-action", methods=["POST"])
+def execute_wheel_action():
+    if session.get("user") is None:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user = session.get("user")
+    user_id = user.get("id")
+    access_token = session.get("access_token")
+    outcome = request.get_json()
+
+    if not outcome:
+        return jsonify({"success": False, "error": "Invalid outcome data."}), 400
+
+    if not access_token:
+        return jsonify({
+            "success": False,
+            "error": "Ingen access token. Log venligst ud og ind igen for at udføre handlingen.",
+            "require_reauth": True
+        }), 401
+
+    try:
+        messages_affected = _execute_wheel_action_logic(user_id, outcome, access_token)
+
+        return jsonify({
+            "success": True, 
+            "message": f"Action completed. {messages_affected} messages affected.", 
+            "messages_affected": messages_affected
+        }), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Execution failed: {str(e)}"}), 500
+# ---------------------------------------------------
 
 
 @mail_bp.route("/", methods=["GET", "POST"])
