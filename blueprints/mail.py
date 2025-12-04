@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from datetime import datetime, timezone
 from models import db, Thread, Message, User, CustomLabel
 from utils.email_utils import fetch_new_threads, sync_existing_threads, clean_message_body
-from utils.gmail_api import send_email_via_api, modify_message_labels # Keeping import for other functions
+from utils.gmail_api import send_email_via_api, modify_message_labels
 from utils.chess_utils import get_or_create_fen, process_move, update_thread_fen, get_position_evaluation, calculate_won_games
 from werkzeug.utils import secure_filename
 from openai import OpenAI
@@ -16,8 +16,8 @@ mail_bp = Blueprint('mail', __name__)
 
 # --- CONFIGURATION: Wheel of Fortune Rules ---
 WHEEL_RULES = [
-    # Action 1: Delete all UNREAD messages
-    {'weight': 3, 'action': 'delete', 'target': 'UNREAD', 'description': 'Slet ALLE ulæste e-mails!', 'icon': 'trash-alt', 'color': 'text-red-600'},
+    # Action 1: Trash all UNREAD messages (Now sets status='Trashed' instead of delete)
+    {'weight': 3, 'action': 'trash', 'target': 'UNREAD', 'description': 'Send alle ulæste e-mails til papirkurven!', 'icon': 'trash-alt', 'color': 'text-red-600'},
     
     # Action 2: Mark all STARRED messages as IMPORTANT
     {'weight': 5, 'action': 'label', 'target': 'STARRED', 'add_label': 'IMPORTANT', 'description': 'Alle stjernemarkerede e-mails får IMPORTANT!', 'icon': 'tag', 'color': 'text-blue-500'},
@@ -58,7 +58,7 @@ def _execute_wheel_action_logic(user_id, outcome):
         return 0
 
     # 1. Base query: filter by user and target label
-    base_query = Message.query.filter(Message.user_id == user_id)
+    base_query = Message.query.filter(Message.user_id == user_id, Message.status == 'Active')
     
     if target_label:
          # Find messages that CURRENTLY have the target label
@@ -69,9 +69,9 @@ def _execute_wheel_action_logic(user_id, outcome):
     for msg in messages_to_update:
         updated_local = False
         
-        if action == 'delete':
-            # ACTION: DELETE (Local DB only)
-            db.session.delete(msg)
+        if action == 'trash':
+            # ACTION: TRASH (Sets status to Trashed)
+            msg.status = 'Trashed'
             updated_local = True
         
         elif action == 'label':
@@ -107,12 +107,12 @@ def spin_wheel():
 
     # 1. Randomly select a rule based on weight
     weights = [rule['weight'] for rule in WHEEL_RULES]
-    # k=1 ensures a list containing only one chosen element
     chosen_rule = random.choices(WHEEL_RULES, weights=weights, k=1)[0]
     
     # 2. Calculate impact
     target_count = 0
-    query = Message.query.filter(Message.user_id == user_id)
+    # ONLY COUNT ACTIVE MESSAGES
+    query = Message.query.filter(Message.user_id == user_id, Message.status == 'Active')
 
     if chosen_rule['action'] != 'none' and chosen_rule['target']:
         target_count = query.filter(Message.label_ids.like(f"%{chosen_rule['target']}%")).count()
@@ -139,7 +139,6 @@ def execute_wheel_action():
 
     user = session.get("user")
     user_id = user.get("id")
-    # access_token is no longer needed here since we are only updating locally
     outcome = request.get_json()
 
     if not outcome:
@@ -160,6 +159,7 @@ def execute_wheel_action():
 # ---------------------------------------------------
 
 
+# --- UPDATED: Standard Inbox Route (Only fetch Active messages) ---
 @mail_bp.route("/", methods=["GET", "POST"])
 @mail_bp.route("/inbox", methods=["GET", "POST"])
 def inbox():
@@ -170,11 +170,12 @@ def inbox():
     user_id = user.get("id")
     user_email = user.get("email")
 
-    # Get all threads for this user, sorted by newest message first
+    # GET THREADS FILTERED BY MESSAGES WITH STATUS = 'Active'
     from sqlalchemy import func
     threads = db.session.query(Thread)\
         .filter(Thread.user_id == user_id)\
         .outerjoin(Message, Thread.id == Message.thread_id)\
+        .filter(Message.status == 'Active') \
         .group_by(Thread.id)\
         .order_by(func.max(Message.date).desc())\
         .all()
@@ -186,9 +187,11 @@ def inbox():
     for thread in threads:
         thread.latest_message_date = None
         thread.other_person = None
+        
+        # Only check active messages for enrichment
+        active_messages = Message.query.filter_by(thread_id=thread.id, status='Active').all()
 
-        # Find latest message date and other person
-        for msg in thread.messages:
+        for msg in active_messages:
             if msg.date:
                 if thread.latest_message_date is None or msg.date > thread.latest_message_date:
                     thread.latest_message_date = msg.date
@@ -198,7 +201,11 @@ def inbox():
                     thread.other_person = msg.sender
                 elif msg.recipient and msg.recipient != user_email:
                     thread.other_person = msg.recipient
-
+                    
+        # Update snippet if no active messages remain (should not happen if thread exists, but good safety)
+        if not active_messages:
+             thread.snippet = "Papirkurv"
+             
     if request.method == "POST":
         # Handle new thread creation
         new_mail = request.form.get("new_mail")
@@ -231,6 +238,90 @@ def inbox():
     return render_template("inbox.html", user=user, threads=threads, custom_labels=custom_labels)
 
 
+# --- NEW: Trash Bin Route ---
+@mail_bp.route("/trash")
+def trash():
+    if session.get("user") is None:
+        return redirect(url_for("auth.auth_login_page"))
+
+    user = session.get("user")
+    user_id = user.get("id")
+
+    # Get all messages with status='Trashed'
+    trashed_messages = Message.query.filter_by(user_id=user_id, status='Trashed').order_by(Message.date.desc()).all()
+    
+    # We group trashed messages by subject/sender for cleaner display
+    trashed_list = []
+    
+    # A set to track unique gmail_message_id being shown (in case of duplicates)
+    seen_message_ids = set() 
+    
+    for msg in trashed_messages:
+        if msg.gmail_message_id in seen_message_ids:
+            continue
+            
+        seen_message_ids.add(msg.gmail_message_id)
+
+        trashed_list.append({
+            'id': msg.id,
+            'subject': msg.subject,
+            'sender': msg.sender,
+            'date': msg.date.strftime('%d/%m/%y %H:%M') if msg.date else 'Ukendt dato',
+            'snippet': clean_message_body(msg.body_plain or msg.body_html, is_html=bool(msg.body_html))[:100] + '...'
+        })
+
+    return render_template("trash.html", trashed_messages=trashed_list, user=user)
+
+
+# --- NEW: Trash Bin Restore API ---
+@mail_bp.route("/api/trash/restore/<int:message_id>", methods=["POST"])
+def trash_restore(message_id):
+    if session.get("user") is None:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    user = session.get("user")
+    user_id = user.get("id")
+    
+    msg = Message.query.filter_by(id=message_id, user_id=user_id, status='Trashed').first()
+    
+    if not msg:
+        return jsonify({"success": False, "error": "Message not found in trash"}), 404
+        
+    try:
+        # Change status back to Active
+        msg.status = 'Active'
+        db.session.commit()
+        return jsonify({"success": True, "message": "Message restored to inbox."}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# --- NEW: Trash Bin Purge API (Local permanent delete) ---
+@mail_bp.route("/api/trash/purge/<int:message_id>", methods=["POST"])
+def trash_purge(message_id):
+    if session.get("user") is None:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    user = session.get("user")
+    user_id = user.get("id")
+    
+    msg = Message.query.filter_by(id=message_id, user_id=user_id, status='Trashed').first()
+    
+    if not msg:
+        return jsonify({"success": False, "error": "Message not found in trash"}), 404
+        
+    try:
+        # PERMANENT LOCAL DELETE
+        db.session.delete(msg)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Message permanently purged."}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# --- UPDATED: Thread Route (Only show Active messages) ---
 @mail_bp.route("/thread/<int:thread_id>", methods=["GET", "POST"])
 def thread(thread_id):
     if session.get("user") is None:
@@ -249,8 +340,8 @@ def thread(thread_id):
     # Get FEN from thread
     fen = get_or_create_fen(thread.id) or thread.fen
 
-    # Determine who is "me" and who is "other" from messages
-    messages = Message.query.filter_by(thread_id=thread.id).order_by(Message.date.asc()).all()
+    # Filter messages to include ONLY active ones
+    messages = Message.query.filter_by(thread_id=thread.id, status='Active').order_by(Message.date.asc()).all()
     me = user_email
     other = None
 
@@ -274,6 +365,7 @@ def thread(thread_id):
     session.pop("current_subject", None)
 
     if request.method == "POST":
+        # ... (POST logic remains unchanged, but relies on active messages)
         body = request.form.get("body", "")
         move_uci = request.form.get("move")
         is_html = request.form.get("is_html") == "true"
@@ -293,7 +385,8 @@ def thread(thread_id):
 
         db.session.commit()
 
-        last_message = Message.query.filter_by(thread_id=thread.id).order_by(Message.date.desc()).first()
+        # Last message is now filtered by status='Active' for accurate reference
+        last_message = Message.query.filter_by(thread_id=thread.id, status='Active').order_by(Message.date.desc()).first()
         in_reply_to = None
         references = None
         gmail_thread_id = thread.gmail_thread_id if not thread.gmail_thread_id.startswith("temp_") else None
@@ -362,7 +455,8 @@ def thread(thread_id):
                     references=references,
                     label_ids="",
                     move=move_uci,
-                    evaluation_score=evaluation_score
+                    evaluation_score=evaluation_score,
+                    status='Active' # New sent message defaults to Active
                 )
                 db.session.add(msg)
                 db.session.commit()
@@ -397,6 +491,7 @@ def thread(thread_id):
 
 @mail_bp.route("/api/fetch-threads", methods=["POST"])
 def fetch_threads():
+    # ... (content remains the same, no status filtering needed here)
     if session.get("user") is None:
         return jsonify({"error": "Not authenticated"}), 401
 
@@ -500,9 +595,11 @@ def get_threads():
     user_id = user.get("id")
 
     from sqlalchemy import func
+    # UPDATED QUERY: Filter messages by status = 'Active'
     threads = db.session.query(Thread)\
         .filter(Thread.user_id == user_id)\
         .outerjoin(Message, Thread.id == Message.thread_id)\
+        .filter(Message.status == 'Active') \
         .group_by(Thread.id)\
         .order_by(func.max(Message.date).desc())\
         .all()
@@ -512,8 +609,11 @@ def get_threads():
         all_labels = set()
         latest_message_date = None
         other_person = None
+        
+        # Only iterate over active messages for display data
+        active_messages = Message.query.filter_by(thread_id=t.id, status='Active').all()
 
-        for msg in t.messages:
+        for msg in active_messages:
             if msg.label_ids:
                 labels = [label.strip() for label in msg.label_ids.split(',') if label.strip()]
                 all_labels.update(labels)
@@ -534,7 +634,7 @@ def get_threads():
             "subject": t.subject,
             "snippet": t.snippet,
             "last_updated": latest_message_date.isoformat() if latest_message_date else None,
-            "message_count": len(t.messages),
+            "message_count": len(active_messages),
             "labels": list(all_labels),
             "other_person": other_person
         })
@@ -559,7 +659,8 @@ def get_thread_messages(thread_id):
     if thread.user_id != user_id:
         return jsonify({"error": "Unauthorized"}), 403
 
-    messages = Message.query.filter_by(thread_id=thread.id).order_by(Message.date.asc()).all()
+    # UPDATED QUERY: Filter messages by status = 'Active'
+    messages = Message.query.filter_by(thread_id=thread.id, status='Active').order_by(Message.date.asc()).all()
 
     message_list = []
     for msg in messages:
@@ -597,7 +698,8 @@ def export_conversation(thread_id):
     if thread.user_id != user_id:
         return jsonify({"error": "Unauthorized"}), 403
 
-    messages = Message.query.filter_by(thread_id=thread.id).order_by(Message.date.asc()).all()
+    # UPDATED QUERY: Filter messages by status = 'Active'
+    messages = Message.query.filter_by(thread_id=thread.id, status='Active').order_by(Message.date.asc()).all()
 
     conversation_lines = []
     conversation_lines.append("=" * 80)
@@ -743,7 +845,8 @@ def update_thread_labels(thread_id):
 
     try:
         updated_count = 0
-        for msg in thread.messages:
+        # UPDATED QUERY: Filter messages by status = 'Active'
+        for msg in Message.query.filter_by(thread_id=thread_id, status='Active').all():
             current_labels = set()
             if msg.label_ids:
                 current_labels = set(label.strip() for label in msg.label_ids.split(',') if label.strip())
