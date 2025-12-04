@@ -23,6 +23,18 @@
         
         /* Smooth transition for theme switching */
         html, body { transition: background-color 0.3s, color 0.3s; }
+
+        /* --- NEW WHEEL ANIMATION CSS --- */
+        @keyframes spin-wheel-keyframes {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(720deg); } /* Spins 2 full times */
+        }
+
+        .wheel-spinning {
+            animation: spin-wheel-keyframes 2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; 
+            /* Uses cubic-bezier for a more 'realistic' wheel start-fast-slow-stop effect */
+        }
+        /* -------------------------------- */
     </style>
 
     
@@ -100,6 +112,11 @@
                     <i class="fas fa-tags"></i>
                 </button>
                 
+                <button onclick="openWheelModal()"
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center shadow-md">
+                    <i class="fas fa-magic mr-2"></i> Træk Skæbnen
+                </button>
+
                 <button onclick="toggleDarkMode()" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-yellow-300 font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Skift tema">
                     <i id="themeIcon" class="fas fa-moon"></i>
                 </button>
@@ -205,6 +222,241 @@
             
             
             <div class="space-y-2">
+                
+                
+                
+                
+                <div class="relative group thread-item" data-labels="">
+                    <a href="/thread/21" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <p class="font-semibold text-gray-800 dark:text-gray-200">New Anime on MyAnimeList.net: World Trigger (Unknown)</p>
+                                            <div class="flex space-x-1">
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        <span class="font-medium text-gray-900 dark:text-gray-300">no-reply</span> - 
+                                        New Anime on MyAnimeList.net: %s /* rese...
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">04/12/25 00:39</span>
+                        </div>
+                    </a>
+                    
+                    <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
+                        <button onclick="toggleLabel(event, 21, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Stjerne">
+                            <i class="fas fa-star text-yellow-500"></i>
+                        </button>
+                        <button onclick="toggleLabel(event, 21, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Vigtig">
+                            <i class="fas fa-exclamation text-red-500"></i>
+                        </button>
+                        <button onclick="markAsRead(event, 21)" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
+                            <i class="fas fa-envelope-open text-blue-500"></i>
+                        </button>
+                        <div class="relative">
+                            <button onclick="toggleCustomLabelMenu(event, 21)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                                <i class="fas fa-tags text-purple-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                
+                
+                <div class="relative group thread-item" data-labels="">
+                    <a href="/thread/20" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <p class="font-semibold text-gray-800 dark:text-gray-200">No Man&#39;s Sky from your Steam wishlist is now on sale!</p>
+                                            <div class="flex space-x-1">
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        <span class="font-medium text-gray-900 dark:text-gray-300">noreply</span> - 
+                                        96 No Man&#39;s Sky from your Steam wishlist...
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">03/12/25 19:41</span>
+                        </div>
+                    </a>
+                    
+                    <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
+                        <button onclick="toggleLabel(event, 20, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Stjerne">
+                            <i class="fas fa-star text-yellow-500"></i>
+                        </button>
+                        <button onclick="toggleLabel(event, 20, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Vigtig">
+                            <i class="fas fa-exclamation text-red-500"></i>
+                        </button>
+                        <button onclick="markAsRead(event, 20)" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
+                            <i class="fas fa-envelope-open text-blue-500"></i>
+                        </button>
+                        <div class="relative">
+                            <button onclick="toggleCustomLabelMenu(event, 20)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                                <i class="fas fa-tags text-purple-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                
+                
+                <div class="relative group thread-item" data-labels="">
+                    <a href="/thread/22" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <p class="font-semibold text-gray-800 dark:text-gray-200">=?utf-8?q?K=C3=B8bskvittering=3A?= McDonald&#39;s - mobilbestilling i app</p>
+                                            <div class="flex space-x-1">
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        <span class="font-medium text-gray-900 dark:text-gray-300">DoNotReply</span> - 
+                                        We got your order, here&#39;s your receipt. ...
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">02/12/25 13:33</span>
+                        </div>
+                    </a>
+                    
+                    <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
+                        <button onclick="toggleLabel(event, 22, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Stjerne">
+                            <i class="fas fa-star text-yellow-500"></i>
+                        </button>
+                        <button onclick="toggleLabel(event, 22, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Vigtig">
+                            <i class="fas fa-exclamation text-red-500"></i>
+                        </button>
+                        <button onclick="markAsRead(event, 22)" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
+                            <i class="fas fa-envelope-open text-blue-500"></i>
+                        </button>
+                        <div class="relative">
+                            <button onclick="toggleCustomLabelMenu(event, 22)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                                <i class="fas fa-tags text-purple-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                
+                
+                <div class="relative group thread-item" data-labels="">
+                    <a href="/thread/23" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <p class="font-semibold text-gray-800 dark:text-gray-200">Semester Final Exams</p>
+                                            <div class="flex space-x-1">
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        <span class="font-medium text-gray-900 dark:text-gray-300">bingo</span> - 
+                                        Semester Final Exams #outlook a{padding:...
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">01/12/25 16:55</span>
+                        </div>
+                    </a>
+                    
+                    <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
+                        <button onclick="toggleLabel(event, 23, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Stjerne">
+                            <i class="fas fa-star text-yellow-500"></i>
+                        </button>
+                        <button onclick="toggleLabel(event, 23, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Vigtig">
+                            <i class="fas fa-exclamation text-red-500"></i>
+                        </button>
+                        <button onclick="markAsRead(event, 23)" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
+                            <i class="fas fa-envelope-open text-blue-500"></i>
+                        </button>
+                        <div class="relative">
+                            <button onclick="toggleCustomLabelMenu(event, 23)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                                <i class="fas fa-tags text-purple-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                
+                
+                <div class="relative group thread-item" data-labels="">
+                    <a href="/thread/24" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <p class="font-semibold text-gray-800 dark:text-gray-200">Din ordre er klar til afhentning</p>
+                                            <div class="flex space-x-1">
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        <span class="font-medium text-gray-900 dark:text-gray-300">webshopsupport</span> - 
+                                        www.matas.dk @font-face{font-family:&#39;emb...
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">01/12/25 11:41</span>
+                        </div>
+                    </a>
+                    
+                    <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
+                        <button onclick="toggleLabel(event, 24, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Stjerne">
+                            <i class="fas fa-star text-yellow-500"></i>
+                        </button>
+                        <button onclick="toggleLabel(event, 24, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Vigtig">
+                            <i class="fas fa-exclamation text-red-500"></i>
+                        </button>
+                        <button onclick="markAsRead(event, 24)" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
+                            <i class="fas fa-envelope-open text-blue-500"></i>
+                        </button>
+                        <div class="relative">
+                            <button onclick="toggleCustomLabelMenu(event, 24)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                                <i class="fas fa-tags text-purple-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 
                 
                 
@@ -1108,6 +1360,29 @@
     </div>
 </div>
 
+<div id="wheelModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 text-center transition-transform duration-300">
+        
+        <h2 id="wheelTitle" class="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+            <i class="fas fa-spinner fa-spin text-yellow-500 mr-2"></i> Hjulet Spinner...
+        </h2>
+
+        <div id="wheelAnimation" class="h-24 flex items-center justify-center mb-6 text-yellow-500 text-6xl">
+            <i class="fas fa-question-circle"></i>
+        </div>
+
+        <p id="wheelResultText" class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-6 hidden">
+            </p>
+
+        <button id="wheelActionButton" onclick="confirmWheelAction()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+            Bekræft Handling
+        </button>
+        <button onclick="closeWheelModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition duration-200">
+            Luk
+        </button>
+    </div>
+</div>
+
 
     <script>
         function toggleDarkMode() {
@@ -1144,6 +1419,134 @@
 
     
 <script>
+    // Global variable to store the result from the server
+    let wheelOutcome = null;
+
+    function openWheelModal() {
+        const animationElement = document.getElementById('wheelAnimation');
+        
+        // 1. Reset and show loading state
+        document.getElementById('wheelTitle').innerHTML = '<i class="fas fa-spinner fa-spin text-yellow-500 mr-2"></i> Hjulet Spinner...';
+        document.getElementById('wheelResultText').classList.add('hidden');
+        document.getElementById('wheelActionButton').classList.add('hidden');
+        document.getElementById('wheelModal').classList.remove('hidden');
+
+        // **START ANIMATION**
+        animationElement.innerHTML = '<i class="fas fa-magic text-yellow-500"></i>';
+        animationElement.classList.add('wheel-spinning'); 
+
+        // 2. Start the spin delay (2 seconds)
+        // We set the timeout duration to match the CSS animation duration (2000ms)
+        setTimeout(fetchOutcomeAfterSpin, 2000); 
+    }
+
+    function closeWheelModal() {
+        document.getElementById('wheelModal').classList.add('hidden');
+        wheelOutcome = null; // Clear state
+    }
+    
+    // Step 2.5: Wait for the animation to finish, then fetch the result
+    async function fetchOutcomeAfterSpin() {
+        const animationElement = document.getElementById('wheelAnimation');
+
+        // Ensure the visual spin has stopped before calling the backend
+        animationElement.classList.remove('wheel-spinning');
+        
+        // 1. Fetch outcome from backend
+        try {
+            const response = await fetch('/api/spin-wheel', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                wheelOutcome = data.outcome;
+                const resultTextElement = document.getElementById('wheelResultText');
+                
+                // 2. Update the modal with the result
+                document.getElementById('wheelTitle').innerHTML = '<i class="fas fa-trophy text-green-500 mr-2"></i> Skæbnen er Afgjort!';
+                
+                // Set animation icon/text based on action
+                let icon = '';
+                let color = '';
+                
+                if (wheelOutcome.action === 'delete') {
+                    icon = '<i class="fas fa-trash-alt text-red-600"></i>';
+                    color = 'text-red-600';
+                } else if (wheelOutcome.action === 'label') {
+                    icon = '<i class="fas fa-tag text-blue-500"></i>';
+                    color = 'text-blue-500';
+                } else { // No action
+                    icon = '<i class="fas fa-hand-paper text-gray-500"></i>';
+                    color = 'text-gray-500';
+                }
+
+                animationElement.innerHTML = icon;
+
+                // Display the result message
+                resultTextElement.innerHTML = `
+                    Du fik: <span class="${color} font-bold">${wheelOutcome.description}</span><br>
+                    Dette påvirker: <span class="font-medium">${wheelOutcome.target_count} beskeder.</span>
+                `;
+                resultTextElement.classList.remove('hidden');
+
+                // Show action button if an action is required AND target count is > 0
+                if (wheelOutcome.action !== 'none' && wheelOutcome.target_count > 0) {
+                    document.getElementById('wheelActionButton').classList.remove('hidden');
+                } else if (wheelOutcome.action !== 'none' && wheelOutcome.target_count === 0) {
+                    // Specific message if the action has 0 impact
+                    resultTextElement.innerHTML = `
+                        Du fik: <span class="${color} font-bold">${wheelOutcome.description}</span><br>
+                        <span class="text-green-500 font-bold">0 beskeder fundet. Du slipper!</span>
+                    `;
+                }
+
+            } else {
+                alert('Fejl ved hjulet: ' + data.error);
+                closeWheelModal();
+            }
+
+        } catch (error) {
+            console.error('Network Error:', error);
+            alert('Netværksfejl under spin.');
+            closeWheelModal();
+        }
+    }
+
+    async function confirmWheelAction() {
+        if (!wheelOutcome) return;
+
+        // Show loading state while action is confirmed
+        const actionButton = document.getElementById('wheelActionButton');
+        actionButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Udfører...';
+        actionButton.disabled = true;
+
+        try {
+            const response = await fetch('/api/execute-wheel-action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(wheelOutcome) // Send the server's outcome back for confirmation
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(`Succes! ${data.messages_affected} beskeder blev opdateret.`);
+                closeWheelModal();
+                location.reload(); // Reload to update thread list
+            } else if (data.require_reauth) {
+                 alert('Authentication er påkrævet. Log venligst ud og ind igen.');
+                 location.href = '/auth/logout';
+            } else {
+                alert('Fejl under handling: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Execution Error:', error);
+            alert('Netværksfejl under handling.');
+        } finally {
+            actionButton.innerHTML = 'Bekræft Handling';
+            actionButton.disabled = false;
+        }
+    }
+
     // Store custom labels globally
     let customLabels = [];
 

@@ -18,22 +18,27 @@ class User(db.Model):
 
 class Thread(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    gmail_thread_id = db.Column(db.String(255), unique=True, nullable=False)
+    # ADDED INDEX: Essential for fast lookup during sync
+    gmail_thread_id = db.Column(db.String(255), unique=True, nullable=False, index=True) 
     subject = db.Column(db.String(500))
     snippet = db.Column(db.String(500))
     fen = db.Column(db.String(100))  # Current chess position (FEN)
     game_result = db.Column(db.String(10))  # '1-0', '0-1', '1/2-1/2', or None
     last_updated = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    # ADDED INDEX
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
 
     messages = db.relationship("Message", backref="thread", lazy=True)
 
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    gmail_message_id = db.Column(db.String(255), unique=True, nullable=False)
-    thread_id = db.Column(db.Integer, db.ForeignKey("thread.id"), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    # ADDED INDEX: Critical for checking if message exists
+    gmail_message_id = db.Column(db.String(255), unique=True, nullable=False, index=True) 
+    # ADDED INDEX: Critical for thread queries
+    thread_id = db.Column(db.Integer, db.ForeignKey("thread.id"), nullable=False, index=True)
+    # ADDED INDEX: Critical for user queries
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
     sender = db.Column(db.String(120))
     recipient = db.Column(db.String(120))
     date = db.Column(db.DateTime)
