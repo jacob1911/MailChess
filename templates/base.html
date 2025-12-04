@@ -23,6 +23,18 @@
         
         /* Smooth transition for theme switching */
         html, body { transition: background-color 0.3s, color 0.3s; }
+
+        /* --- NEW WHEEL ANIMATION CSS --- */
+        @keyframes spin-wheel-keyframes {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(720deg); } /* Spins 2 full times */
+        }
+
+        .wheel-spinning {
+            animation: spin-wheel-keyframes 2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; 
+            /* Uses cubic-bezier for a more 'realistic' wheel start-fast-slow-stop effect */
+        }
+        /* -------------------------------- */
     </style>
 
     {% block extra_css %}{% endblock %}

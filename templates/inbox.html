@@ -264,23 +264,36 @@
     let wheelOutcome = null;
 
     function openWheelModal() {
+        const animationElement = document.getElementById('wheelAnimation');
+        
         // 1. Reset and show loading state
         document.getElementById('wheelTitle').innerHTML = '<i class="fas fa-spinner fa-spin text-yellow-500 mr-2"></i> Hjulet Spinner...';
-        document.getElementById('wheelAnimation').innerHTML = '<i class="fas fa-question-circle"></i>';
         document.getElementById('wheelResultText').classList.add('hidden');
         document.getElementById('wheelActionButton').classList.add('hidden');
         document.getElementById('wheelModal').classList.remove('hidden');
 
-        // 2. Start the spin animation (Simulate a 2-second spin delay)
-        setTimeout(getWheelOutcome, 2000); 
+        // **START ANIMATION**
+        animationElement.innerHTML = '<i class="fas fa-magic text-yellow-500"></i>';
+        animationElement.classList.add('wheel-spinning'); 
+
+        // 2. Start the spin delay (2 seconds)
+        // We set the timeout duration to match the CSS animation duration (2000ms)
+        setTimeout(fetchOutcomeAfterSpin, 2000); 
     }
 
     function closeWheelModal() {
         document.getElementById('wheelModal').classList.add('hidden');
         wheelOutcome = null; // Clear state
     }
+    
+    // Step 2.5: Wait for the animation to finish, then fetch the result
+    async function fetchOutcomeAfterSpin() {
+        const animationElement = document.getElementById('wheelAnimation');
 
-    async function getWheelOutcome() {
+        // Ensure the visual spin has stopped before calling the backend
+        animationElement.classList.remove('wheel-spinning');
+        
+        // 1. Fetch outcome from backend
         try {
             const response = await fetch('/api/spin-wheel', { method: 'POST' });
             const data = await response.json();
@@ -289,7 +302,7 @@
                 wheelOutcome = data.outcome;
                 const resultTextElement = document.getElementById('wheelResultText');
                 
-                // 3. Update the modal with the result
+                // 2. Update the modal with the result
                 document.getElementById('wheelTitle').innerHTML = '<i class="fas fa-trophy text-green-500 mr-2"></i> Skæbnen er Afgjort!';
                 
                 // Set animation icon/text based on action
@@ -307,7 +320,7 @@
                     color = 'text-gray-500';
                 }
 
-                document.getElementById('wheelAnimation').innerHTML = icon;
+                animationElement.innerHTML = icon;
 
                 // Display the result message
                 resultTextElement.innerHTML = `
@@ -549,7 +562,7 @@
             element.innerHTML = `
                 <i class="fas fa-exclamation-triangle mr-2"></i>
                 <strong>Authentication fejl:</strong> ${data.error}<br>
-                <button onclick="window.location.href='{{ url_for('auth.logout') }}'"
+                <button onclick="window.location.href='{{ url_for("auth.logout") }}'"
                         class="mt-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded">
                     <i class="fas fa-sign-out-alt mr-2"></i>Log ud og ind igen
                 </button>
