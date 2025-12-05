@@ -1,15 +1,23 @@
 import os
-from flask import Flask, render_template, session, redirect, url_for, request # <-- ADDED request
+import secrets # REQUIRED for generating unique FLASK_SECRET_KEY
+from flask import Flask, render_template, session, redirect, url_for, request
 from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from datetime import timedelta
-from flask_babel import Babel, gettext as _ # <-- ADDED
+from flask_babel import Babel, gettext as _
 
-# Load environment variables FIRST (before importing blueprints)
+# --- HARDCODED PUBLIC KEYS (ZERO-SETUP IMPLEMENTATION) ---
+# These are the actual keys extracted from environ.env, now embedded for public distribution.
+MAILCHESS_GOOGLE_CLIENT_ID = "302768656386-oq61tfoje3s0u3o0ss2qhuj0cfrivq46.apps.googleusercontent.com"
+MAILCHESS_GOOGLE_CLIENT_SECRET = "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" 
+# ---------------------------------------------------------
+
+
+# Load environment variables FIRST. This is now PRIMARILY to load the optional OPENAI_API_KEY.
 load_dotenv('environ.env', override=True)
 
 print("---------------------------------------------------")
-print(f"DEBUG: Loaded Client ID: {os.environ.get('GOOGLE_CLIENT_ID')}")
+print(f"DEBUG: Loaded Client ID: {MAILCHESS_GOOGLE_CLIENT_ID}") 
 print("---------------------------------------------------")
 # ---------------------------
 
@@ -24,18 +32,31 @@ app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "instance", "mailchess.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret")
+
+# --- FLASK SECRET KEY GENERATION (ZERO-SETUP IMPLEMENTATION) ---
+# 1. Check if FLASK_SECRET_KEY is provided in the environment (e.g., via a developer's environ.env)
+provided_secret = os.environ.get("FLASK_SECRET_KEY")
+
+if provided_secret is None:
+    # 2. If missing, generate a new, secure key at runtime for this instance/session
+    app.config['SECRET_KEY'] = secrets.token_hex(32)
+else:
+    # 3. If present, use the one from the environment (for developers/testing)
+    app.config['SECRET_KEY'] = provided_secret
+
+# Set the application's secret key
+app.secret_key = app.config['SECRET_KEY']
+# ----------------------------------------------------
 
 # This keeps the login cookie valid for 31 days if requested
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=31)
 # --------------------------------------
 
-# --- BABEL/LOCALIZATION CONFIGURATION --- <-- FIXED FOR BABEL 4.0.0
-app.config['BABEL_DEFAULT_LOCALE'] = 'da' # Default to Danish since templates are currently Danish
+# --- BABEL/LOCALIZATION CONFIGURATION ---
+app.config['BABEL_DEFAULT_LOCALE'] = 'da'
 app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
 babel = Babel(app)
 
-# --- FIX: Define the selector function without the failing decorator ---
 def get_locale():
     # 1. Check if language is explicitly set in session (via switch)
     if 'lang' in session:
@@ -43,7 +64,6 @@ def get_locale():
     # 2. Check the language accepted by the browser
     return request.accept_languages.best_match(['da', 'en'])
 
-# --- FIX: Register the selector function with the Babel instance property ---
 babel.locale_selector = get_locale
 
 @app.context_processor
@@ -76,8 +96,9 @@ db.init_app(app)
 oauth = OAuth(app)
 oauth.register(
     name="google",
-    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
-    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    # Use the hardcoded constants defined above (Zero-Setup Fix)
+    client_id=MAILCHESS_GOOGLE_CLIENT_ID,
+    client_secret=MAILCHESS_GOOGLE_CLIENT_SECRET,
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={
         "scope": "openid email profile https://mail.google.com/",
