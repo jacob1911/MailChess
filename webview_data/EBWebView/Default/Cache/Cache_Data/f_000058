@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MailChess - Inbox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* This fixes the email display in Dark Mode */
+        .dark .email-content-inverter {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        .dark .email-content-inverter img {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        
+        /* Smooth transition for theme switching */
+        html, body { transition: background-color 0.3s, color 0.3s; }
+
+        /* --- NEW WHEEL ANIMATION CSS --- */
+        @keyframes spin-wheel-keyframes {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(720deg); } /* Spins 2 full times */
+        }
+
+        .wheel-spinning {
+            animation: spin-wheel-keyframes 2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; 
+            /* Uses cubic-bezier for a more 'realistic' wheel start-fast-slow-stop effect */
+        }
+        /* -------------------------------- */
+    </style>
+
+    
+<style>
+    .label-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .label-unread { background-color: #DBEAFE; color: #1E40AF; }
+    .label-starred { background-color: #FEF3C7; color: #D97706; }
+    .label-important { background-color: #FEE2E2; color: #DC2626; }
+    .label-inbox { background-color: #DCFCE7; color: #16A34A; }
+</style>
+
+
+    <script>
+        // IMMEDIATE THEME CHECK: Runs before content loads
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen text-gray-800 dark:text-gray-100 flex flex-col">
+
+    <nav class="p-4 bg-white/90 shadow-sm dark:bg-gray-900/90 transition-colors duration-200">
+        <div class="container mx-auto flex justify-between items-center">
+            <ul class="flex gap-6">
+                <li>
+                    <a href="/inbox" class="text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold flex items-center">
+                        <i class="fas fa-home mr-2"></i> Indbakke
+                    </a>
+                </li>
+                <li>
+                    <a href="/mail_stats/" class="text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold flex items-center">
+                        <i class="fas fa-chart-pie mr-2"></i> Statistik
+                    </a>
+                </li>
+            </ul>
+
+            <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-yellow-300 transition-colors shadow-sm">
+                <i id="navThemeIcon" class="fas fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 transition-colors duration-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-white flex items-center">
+                    <i class="fas fa-chess-knight text-indigo-600 dark:text-indigo-400 mr-3"></i>
+                    MailChess
+                </h1>
+                <p class="text-gray-600 dark:text-gray-300 mt-1">Velkommen, Magnus Jensen</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleNewThread()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center shadow-md">
+                    <i class="fas fa-plus mr-2"></i> Ny tråd
+                </button>
+                
+                <a href="/mail_stats/" class="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Statistik">
+                    <i class="fas fa-chart-pie"></i>
+                </a>
+
+                <button onclick="toggleLabelManager()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Administrer labels">
+                    <i class="fas fa-tags"></i>
+                </button>
+                
+                <button onclick="openWheelModal()"
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center shadow-md">
+                    <i class="fas fa-magic mr-2"></i> Træk Skæbnen
+                </button>
+
+                <button onclick="toggleDarkMode()" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-yellow-300 font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Skift tema">
+                    <i id="themeIcon" class="fas fa-moon"></i>
+                </button>
+
+                <a href="/auth/logout" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Log ud">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    
+        
+    
+
+    <div id="newThreadForm" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 transition-colors duration-200">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+            <i class="fas fa-envelope mr-2"></i> Opret ny tråd
+        </h2>
+        <form method="POST" class="space-y-4">
+            <div>
+                <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Modtager email</label>
+                <div class="relative">
+                    <input type="email" name="new_mail" id="recipientInput" required list="contactList"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        placeholder="modtager@example.com" autocomplete="off">
+                    <datalist id="contactList"></datalist>
+                </div>
+            </div>
+            <div>
+                <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Emne</label>
+                <input type="text" name="subject" required
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Skal vi spille skak?">
+            </div>
+            <div class="flex space-x-3">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200">
+                    <i class="fas fa-paper-plane mr-2"></i> Opret tråd
+                </button>
+                <button type="button" onclick="toggleNewThread()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-6 py-2 rounded-lg transition duration-200">
+                    Annuller
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div id="labelManager" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 transition-colors duration-200">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+                <i class="fas fa-tags mr-2"></i> Administrer Labels
+            </h2>
+            <button onclick="toggleLabelManager()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
+            <h3 class="font-semibold text-gray-700 dark:text-gray-200 mb-3">Opret nyt label</h3>
+            <form id="createLabelForm" class="space-y-3">
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1 text-sm">Label navn</label>
+                    <input type="text" id="labelName" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg" placeholder="Navn">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1 text-sm">Farve</label>
+                        <input type="color" id="labelColor" value="#6B7280" class="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1 text-sm">Ikon</label>
+                        <input type="file" id="labelIcon" accept="image/*" class="w-full text-sm text-gray-500 dark:text-gray-400">
+                    </div>
+                </div>
+                <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-lg">Opret</button>
+            </form>
+        </div>
+        <div id="customLabelsList" class="space-y-2"></div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 transition-colors duration-200">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+                <i class="fas fa-inbox mr-2"></i> Dine samtaler
+            </h2>
+            <div class="flex space-x-2 items-center">
+                <select id="labelFilter" onchange="filterThreads()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                    <option value="">Alle labels</option>
+                    <option value="UNREAD">Ulæste</option>
+                    <option value="STARRED">Stjernede</option>
+                    <option value="IMPORTANT">Vigtige</option>
+                    <option value="INBOX">I indbakke</option>
+                </select>
+                <input type="number" id="threadCount" value="5" min="1" max="50" class="w-16 px-2 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-center">
+                <button id="fetchBtn" onclick="fetchNewThreads()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i id="fetchIcon" class="fas fa-download mr-2"></i> Hent</button>
+                <button id="syncBtn" onclick="syncExisting()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"><i id="syncIcon" class="fas fa-sync-alt mr-2"></i> Sync</button>
+                <button id="clearBtn" onclick="clearDatabase()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"><i id="clearIcon" class="fas fa-trash mr-2"></i> Ryd</button>
+            </div>
+        </div>
+
+        <div id="statusMessage" class="hidden mb-4 p-3 rounded-lg"></div>
+
+        <div id="threadsList">
+            
+            <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+                <i class="fas fa-inbox text-6xl mb-4 opacity-50"></i>
+                <p>Ingen tråde endnu</p>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<div id="wheelModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 text-center transition-transform duration-300">
+        
+        <h2 id="wheelTitle" class="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+            <i class="fas fa-spinner fa-spin text-yellow-500 mr-2"></i> Hjulet Spinner...
+        </h2>
+
+        <div id="wheelAnimation" class="h-24 flex items-center justify-center mb-6 text-yellow-500 text-6xl">
+            <i class="fas fa-question-circle"></i>
+        </div>
+
+        <p id="wheelResultText" class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-6 hidden">
+            </p>
+
+        <button id="wheelActionButton" onclick="confirmWheelAction()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+            Bekræft Handling
+        </button>
+        <button onclick="closeWheelModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition duration-200">
+            Luk
+        </button>
+    </div>
+</div>
+
+
+    <script>
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            // Update the icon in the Navbar
+            const navIcon = document.getElementById('navThemeIcon');
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            if (navIcon) {
+                navIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+
+            // Update icon in the Inbox Toolbar (if it exists)
+            const toolbarIcon = document.getElementById('themeIcon');
+            if (toolbarIcon) {
+                toolbarIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+
+        // Run on load
+        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+    </script>
+
+    
+<script>
+    // Global variable to store the result from the server
+    let wheelOutcome = null;
+
+    function openWheelModal() {
+        const animationElement = document.getElementById('wheelAnimation');
+        
+        // 1. Reset and show loading state
+        document.getElementById('wheelTitle').innerHTML = '<i class="fas fa-spinner fa-spin text-yellow-500 mr-2"></i> Hjulet Spinner...';
+        document.getElementById('wheelResultText').classList.add('hidden');
+        document.getElementById('wheelActionButton').classList.add('hidden');
+        document.getElementById('wheelModal').classList.remove('hidden');
+
+        // **START ANIMATION**
+        animationElement.innerHTML = '<i class="fas fa-magic text-yellow-500"></i>';
+        animationElement.classList.add('wheel-spinning'); 
+
+        // 2. Start the spin delay (2 seconds)
+        // We set the timeout duration to match the CSS animation duration (2000ms)
+        setTimeout(fetchOutcomeAfterSpin, 2000); 
+    }
+
+    function closeWheelModal() {
+        document.getElementById('wheelModal').classList.add('hidden');
+        wheelOutcome = null; // Clear state
+    }
+    
+    // Step 2.5: Wait for the animation to finish, then fetch the result
+    async function fetchOutcomeAfterSpin() {
+        const animationElement = document.getElementById('wheelAnimation');
+
+        // Ensure the visual spin has stopped before calling the backend
+        animationElement.classList.remove('wheel-spinning');
+        
+        // 1. Fetch outcome from backend
+        try {
+            const response = await fetch('/api/spin-wheel', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                wheelOutcome = data.outcome;
+                const resultTextElement = document.getElementById('wheelResultText');
+                
+                // 2. Update the modal with the result
+                document.getElementById('wheelTitle').innerHTML = '<i class="fas fa-trophy text-green-500 mr-2"></i> Skæbnen er Afgjort!';
+                
+                // Set animation icon/text based on action
+                let icon = '';
+                let color = '';
+                
+                if (wheelOutcome.action === 'delete') {
+                    icon = '<i class="fas fa-trash-alt text-red-600"></i>';
+                    color = 'text-red-600';
+                } else if (wheelOutcome.action === 'label') {
+                    icon = '<i class="fas fa-tag text-blue-500"></i>';
+                    color = 'text-blue-500';
+                } else { // No action
+                    icon = '<i class="fas fa-hand-paper text-gray-500"></i>';
+                    color = 'text-gray-500';
+                }
+
+                animationElement.innerHTML = icon;
+
+                // Display the result message
+                resultTextElement.innerHTML = `
+                    Du fik: <span class="${color} font-bold">${wheelOutcome.description}</span><br>
+                    Dette påvirker: <span class="font-medium">${wheelOutcome.target_count} beskeder.</span>
+                `;
+                resultTextElement.classList.remove('hidden');
+
+                // Show action button if an action is required AND target count is > 0
+                if (wheelOutcome.action !== 'none' && wheelOutcome.target_count > 0) {
+                    document.getElementById('wheelActionButton').classList.remove('hidden');
+                } else if (wheelOutcome.action !== 'none' && wheelOutcome.target_count === 0) {
+                    // Specific message if the action has 0 impact
+                    resultTextElement.innerHTML = `
+                        Du fik: <span class="${color} font-bold">${wheelOutcome.description}</span><br>
+                        <span class="text-green-500 font-bold">0 beskeder fundet. Du slipper!</span>
+                    `;
+                }
+
+            } else {
+                alert('Fejl ved hjulet: ' + data.error);
+                closeWheelModal();
+            }
+
+        } catch (error) {
+            console.error('Network Error:', error);
+            alert('Netværksfejl under spin.');
+            closeWheelModal();
+        }
+    }
+
+    async function confirmWheelAction() {
+        if (!wheelOutcome) return;
+
+        // Show loading state while action is confirmed
+        const actionButton = document.getElementById('wheelActionButton');
+        actionButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Udfører...';
+        actionButton.disabled = true;
+
+        try {
+            const response = await fetch('/api/execute-wheel-action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(wheelOutcome) // Send the server's outcome back for confirmation
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(`Succes! ${data.messages_affected} beskeder blev opdateret.`);
+                closeWheelModal();
+                location.reload(); // Reload to update thread list
+            } else if (data.require_reauth) {
+                 alert('Authentication er påkrævet. Log venligst ud og ind igen.');
+                 location.href = '/auth/logout';
+            } else {
+                alert('Fejl under handling: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Execution Error:', error);
+            alert('Netværksfejl under handling.');
+        } finally {
+            actionButton.innerHTML = 'Bekræft Handling';
+            actionButton.disabled = false;
+        }
+    }
+
+    // Store custom labels globally
+    let customLabels = [];
+
+    async function loadContacts() {
+        try {
+            const response = await fetch('/api/contacts');
+            const data = await response.json();
+
+            if (data.success) {
+                const dataList = document.getElementById('contactList');
+                dataList.innerHTML = ''; // Clear existing
+
+                data.contacts.forEach(email => {
+                    const option = document.createElement('option');
+                    option.value = email;
+                    dataList.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading contacts:', error);
+        }
+    }
+
+    function toggleNewThread() {
+        const form = document.getElementById('newThreadForm');
+        form.classList.toggle('hidden');
+        
+        // Load contacts if we are showing the form
+        if (!form.classList.contains('hidden')) {
+            loadContacts();
+        }
+    }
+
+    function toggleLabelManager() {
+        const manager = document.getElementById('labelManager');
+        manager.classList.toggle('hidden');
+        if (!manager.classList.contains('hidden')) {
+            loadCustomLabels();
+        }
+    }
+
+    // Fetch new threads
+    async function fetchNewThreads() {
+        const fetchBtn = document.getElementById('fetchBtn');
+        const fetchIcon = document.getElementById('fetchIcon');
+        const statusMessage = document.getElementById('statusMessage');
+        const threadCount = document.getElementById('threadCount').value;
+
+        // Disable button and show loading
+        fetchBtn.disabled = true;
+        fetchIcon.classList.add('fa-spin');
+
+        // Show status message
+        statusMessage.className = 'mb-4 p-3 rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100';
+        statusMessage.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Henter sidste ${threadCount} tråde...`;
+        statusMessage.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/api/fetch-threads', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ count: threadCount })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const stats = data.stats;
+                statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
+                statusMessage.innerHTML = `
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <strong>Hentning fuldført!</strong><br>
+                    <small>
+                        Nye tråde: ${stats.threads_fetched} |
+                        Beskeder: ${stats.messages_added}
+                    </small>
+                `;
+
+                // Update thread list
+                await updateThreadList();
+
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    statusMessage.classList.add('hidden');
+                }, 5000);
+
+            } else {
+                showError(statusMessage, data);
+            }
+
+        } catch (error) {
+            statusMessage.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
+            statusMessage.innerHTML = `
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <strong>Netværksfejl:</strong> ${error.message}
+            `;
+        } finally {
+            fetchBtn.disabled = false;
+            fetchIcon.classList.remove('fa-spin');
+        }
+    }
+
+    // Sync existing threads
+    async function syncExisting() {
+        const syncBtn = document.getElementById('syncBtn');
+        const syncIcon = document.getElementById('syncIcon');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // Disable button and show loading
+        syncBtn.disabled = true;
+        syncIcon.classList.add('fa-spin');
+
+        // Show status message
+        statusMessage.className = 'mb-4 p-3 rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100';
+        statusMessage.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Synkroniserer eksisterende tråde...';
+        statusMessage.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/api/sync-existing', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const stats = data.stats;
+                statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
+                statusMessage.innerHTML = `
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <strong>Synkronisering fuldført!</strong><br>
+                    <small>
+                        Opdaterede tråde: ${stats.threads_updated} |
+                        Nye beskeder: ${stats.messages_added} |
+                        Træk parset: ${stats.moves_parsed}
+                    </small>
+                `;
+
+                // Update thread list
+                await updateThreadList();
+
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    statusMessage.classList.add('hidden');
+                }, 5000);
+
+            } else {
+                showError(statusMessage, data);
+            }
+
+        } catch (error) {
+            statusMessage.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
+            statusMessage.innerHTML = `
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <strong>Netværksfejl:</strong> ${error.message}
+            `;
+        } finally {
+            syncBtn.disabled = false;
+            syncIcon.classList.remove('fa-spin');
+        }
+    }
+
+    // Helper to show error messages
+    function showError(element, data) {
+        element.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
+
+        if (data.require_reauth) {
+            element.innerHTML = `
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <strong>Authentication fejl:</strong> ${data.error}<br>
+                <button onclick="window.location.href='/auth/logout'"
+                        class="mt-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Log ud og ind igen
+                </button>
+            `;
+        } else {
+            element.innerHTML = `
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <strong>Fejl:</strong> ${data.error}
+            `;
+        }
+    }
+
+    // Load custom labels
+    async function loadCustomLabels() {
+        try {
+            const response = await fetch('/api/custom-labels');
+            const data = await response.json();
+
+            if (data.success) {
+                customLabels = data.labels;
+                renderCustomLabelsList();
+                updateLabelFilter();
+            }
+        } catch (error) {
+            console.error('Error loading custom labels:', error);
+        }
+    }
+
+    // Render custom labels list in manager
+    function renderCustomLabelsList() {
+        const container = document.getElementById('customLabelsList');
+
+        if (customLabels.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Ingen custom labels endnu</p>';
+            return;
+        }
+
+        let html = '';
+        customLabels.forEach(label => {
+            const iconHtml = label.icon_path
+                ? `<img src="${label.icon_path}" alt="${label.display_name}" class="w-5 h-5">`
+                : `<i class="fas fa-tag"></i>`;
+
+            html += `
+                <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded flex items-center justify-center" style="background-color: ${label.color}22; color: ${label.color};">
+                            ${iconHtml}
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800 dark:text-white">${label.display_name}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">${label.name}</p>
+                        </div>
+                    </div>
+                    <button onclick="deleteCustomLabel(${label.id}, '${label.display_name}')"
+                            class="text-red-500 hover:text-red-700 p-2">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    // Update label filter dropdown with custom labels
+    function updateLabelFilter() {
+        const filterSelect = document.getElementById('labelFilter');
+
+        // Remove existing custom label options
+        const options = Array.from(filterSelect.options);
+        options.forEach(option => {
+            if (option.dataset.custom === 'true') {
+                option.remove();
+            }
+        });
+
+        // Add custom labels
+        customLabels.forEach(label => {
+            const option = document.createElement('option');
+            option.value = label.name;
+            option.textContent = label.display_name;
+            option.dataset.custom = 'true';
+            filterSelect.appendChild(option);
+        });
+    }
+
+    // Create custom label
+    document.getElementById('createLabelForm')?.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const name = document.getElementById('labelName').value;
+        const color = document.getElementById('labelColor').value;
+        const iconFile = document.getElementById('labelIcon').files[0];
+
+        const formData = new FormData();
+        formData.append('display_name', name);
+        formData.append('color', color);
+        if (iconFile) {
+            formData.append('icon', iconFile);
+        }
+
+        try {
+            const response = await fetch('/api/custom-labels', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(`Label "${data.label.display_name}" oprettet!`);
+                document.getElementById('createLabelForm').reset();
+                document.getElementById('labelColor').value = '#6B7280';
+                await loadCustomLabels();
+            } else {
+                alert('Fejl: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error creating label:', error);
+            alert('Netværksfejl: ' + error.message);
+        }
+    });
+
+    // Delete custom label
+    async function deleteCustomLabel(labelId, labelName) {
+        if (!confirm(`Er du sikker på at du vil slette labelet "${labelName}"?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/custom-labels/${labelId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message);
+                await loadCustomLabels();
+                await updateThreadList();
+            } else {
+                alert('Fejl: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error deleting label:', error);
+            alert('Netværksfejl: ' + error.message);
+        }
+    }
+
+    // Helper function to render label badges
+    function renderLabelBadges(labels) {
+        if (!labels || labels.length === 0) return '';
+
+        const labelIcons = {
+            'UNREAD': '<i class="fas fa-envelope"></i>',
+            'STARRED': '<i class="fas fa-star"></i>',
+            'IMPORTANT': '<i class="fas fa-exclamation"></i>',
+            'INBOX': '<i class="fas fa-inbox"></i>'
+        };
+
+        return labels.map(label => {
+            // Check if it's a custom label
+            const customLabel = customLabels.find(cl => cl.name === label);
+
+            if (customLabel) {
+                const iconHtml = customLabel.icon_path
+                    ? `<img src="${customLabel.icon_path}" alt="${customLabel.display_name}" style="width: 12px; height: 12px;">`
+                    : `<i class="fas fa-tag"></i>`;
+                return `<span class="label-badge" style="background-color: ${customLabel.color}22; color: ${customLabel.color}; border: 1px solid ${customLabel.color}">${iconHtml}</span>`;
+            } else {
+                // System label
+                const icon = labelIcons[label] || label;
+                const labelClass = `label-${label.toLowerCase()}`;
+                return `<span class="label-badge ${labelClass}">${icon}</span>`;
+            }
+        }).join('');
+    }
+
+    // Update thread list after sync
+    async function updateThreadList() {
+        try {
+            const response = await fetch('/api/threads');
+            const data = await response.json();
+
+            if (data.success && data.threads.length > 0) {
+                const threadsList = document.getElementById('threadsList');
+
+                // Build new thread list HTML
+                let html = '<div class="space-y-2">';
+                data.threads.forEach(thread => {
+                    const labelBadges = renderLabelBadges(thread.labels);
+                    const labelData = thread.labels ? thread.labels.join(',') : '';
+
+                    // Format timestamp
+                    let timestamp = '';
+                    if (thread.last_updated) {
+                        const date = new Date(thread.last_updated);
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const year = String(date.getFullYear()).slice(-2);
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        timestamp = `${day}/${month}/${year} ${hours}:${minutes}`;
+                    }
+
+                    // Format other person (username part before @)
+                    let otherPersonName = '';
+                    if (thread.other_person) {
+                        otherPersonName = thread.other_person.split('@')[0];
+                    }
+
+                    // Format snippet with person name
+                    let snippetText = thread.snippet ?
+                        (thread.snippet.length > 40 ? thread.snippet.substring(0, 40) + '...' : thread.snippet) :
+                        'Ingen beskeder endnu';
+
+                    let snippetHtml = otherPersonName ?
+                        `<span class="font-medium text-gray-900 dark:text-gray-300">${otherPersonName}</span> - ${snippetText}` :
+                        snippetText;
+
+                    html += `
+                        <div class="relative group thread-item" data-labels="${labelData}">
+                            <a href="/thread/${thread.id}"
+                               class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3 flex-1">
+                                        <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center justify-between mb-1">
+                                                <div class="flex items-center space-x-2">
+                                                    <p class="font-semibold text-gray-800 dark:text-gray-200">${thread.subject}</p>
+                                                    <div class="flex space-x-1">
+                                                        ${labelBadges}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">${snippetHtml}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">${timestamp}</span>
+                                        <i class="fas fa-chevron-right text-gray-400"></i>
+                                    </div>
+                                </div>
+                            </a>
+                            <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
+                                <button onclick="toggleLabel(event, ${thread.id}, 'STARRED')"
+                                        class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200"
+                                        title="Stjerne">
+                                    <i class="fas fa-star text-yellow-500"></i>
+                                </button>
+                                <button onclick="toggleLabel(event, ${thread.id}, 'IMPORTANT')"
+                                        class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200"
+                                        title="Vigtig">
+                                    <i class="fas fa-exclamation text-red-500"></i>
+                                </button>
+                                <button onclick="markAsRead(event, ${thread.id})"
+                                        class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200"
+                                        title="Marker som læst">
+                                    <i class="fas fa-envelope-open text-blue-500"></i>
+                                </button>
+                                <div class="relative">
+                                    <button onclick="toggleCustomLabelMenu(event, ${thread.id})"
+                                            class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200"
+                                            title="Custom labels">
+                                        <i class="fas fa-tags text-purple-500"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+
+                threadsList.innerHTML = html;
+
+                // Apply current filter if any
+                filterThreads();
+            } else if (data.success && data.threads.length === 0) {
+                const threadsList = document.getElementById('threadsList');
+                threadsList.innerHTML = `
+                    <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+                        <i class="fas fa-inbox text-6xl mb-4 opacity-50"></i>
+                        <p class="text-lg">Ingen tråde endnu</p>
+                        <p class="text-sm">Opret en ny tråd for at komme i gang!</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error updating thread list:', error);
+        }
+    }
+
+    // Clear database
+    async function clearDatabase() {
+        // Confirm before clearing
+        if (!confirm('Er du sikker på at du vil rydde HELE databasen? Dette vil slette alle tråde, beskeder og spil permanent!')) {
+            return;
+        }
+
+        const clearBtn = document.getElementById('clearBtn');
+        const clearIcon = document.getElementById('clearIcon');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // Disable button and show loading
+        clearBtn.disabled = true;
+        clearIcon.classList.add('fa-spin');
+
+        // Show status message
+        statusMessage.className = 'mb-4 p-3 rounded-lg bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-100';
+        statusMessage.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Rydder database...';
+        statusMessage.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/api/clear-database', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const stats = data.stats;
+                statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
+                statusMessage.innerHTML = `
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <strong>Database ryddet!</strong><br>
+                    <small>
+                        Tråde slettet: ${stats.threads_deleted} |
+                        Beskeder slettet: ${stats.messages_deleted} |
+                        Spil slettet: ${stats.games_deleted}
+                    </small>
+                `;
+
+                // Clear thread list display
+                const threadsList = document.getElementById('threadsList');
+                threadsList.innerHTML = `
+                    <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+                        <i class="fas fa-inbox text-6xl mb-4 opacity-50"></i>
+                        <p class="text-lg">Ingen tråde endnu</p>
+                        <p class="text-sm">Opret en ny tråd for at komme i gang!</p>
+                    </div>
+                `;
+
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    statusMessage.classList.add('hidden');
+                }, 5000);
+
+            } else {
+                statusMessage.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
+                statusMessage.innerHTML = `
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <strong>Fejl:</strong> ${data.error}
+                `;
+            }
+
+        } catch (error) {
+            statusMessage.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
+            statusMessage.innerHTML = `
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <strong>Netværksfejl:</strong> ${error.message}
+            `;
+        } finally {
+            clearBtn.disabled = false;
+            clearIcon.classList.remove('fa-spin');
+        }
+    }
+
+    // Filter threads by label
+    function filterThreads() {
+        const filterValue = document.getElementById('labelFilter');
+        const threadItems = document.querySelectorAll('.thread-item');
+
+        threadItems.forEach(item => {
+            if (!filterValue.value) {
+                // Show all threads if no filter selected
+                item.style.display = '';
+            } else {
+                // Check if thread has the selected label
+                const labels = item.getAttribute('data-labels');
+                if (labels && labels.split(',').includes(filterValue.value)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    // Toggle a label for a thread
+    async function toggleLabel(event, threadId, label) {
+        console.log('[DEBUG] toggleLabel called', { threadId, label });
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Find thread item - try closest first, then search by thread link
+        let threadItem = event.target.closest('.thread-item');
+        if (!threadItem) {
+            // If called from dropdown menu, find thread by ID in the link
+            const threadLink = document.querySelector(`a[href="/thread/${threadId}"]`);
+            if (threadLink) {
+                threadItem = threadLink.closest('.thread-item');
+            }
+        }
+
+        if (!threadItem) {
+            console.error('[ERROR] Could not find thread item for threadId:', threadId);
+            alert('Kunne ikke finde tråden');
+            return;
+        }
+
+        const labels = threadItem.getAttribute('data-labels').split(',').filter(l => l);
+        const hasLabel = labels.includes(label);
+        console.log('[DEBUG] Current labels:', labels, 'Has label:', hasLabel);
+
+        try {
+            const requestBody = {
+                add_labels: hasLabel ? [] : [label],
+                remove_labels: hasLabel ? [label] : []
+            };
+            console.log('[DEBUG] Sending request:', requestBody);
+
+            const response = await fetch(`/api/thread/${threadId}/labels`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+            console.log('[DEBUG] Response:', data);
+
+            if (data.success) {
+                // Refresh thread list to show updated labels
+                await updateThreadList();
+            } else if (data.require_reauth) {
+                alert(data.error);
+                window.location.href = '/auth/logout';
+            } else {
+                alert('Fejl: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error toggling label:', error);
+            alert('Netværksfejl: ' + error.message);
+        }
+    }
+
+    // Mark thread as read
+    async function markAsRead(event, threadId) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        try {
+            const response = await fetch(`/api/thread/${threadId}/labels`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    add_labels: [],
+                    remove_labels: ['UNREAD']
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Refresh thread list to show updated labels
+                await updateThreadList();
+            } else if (data.require_reauth) {
+                alert(data.error);
+                window.location.href = '/auth/logout';
+            } else {
+                alert('Fejl: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error marking as read:', error);
+            alert('Netværksfejl: ' + error.message);
+        }
+    }
+
+    // Toggle custom label menu
+    let currentLabelMenuThreadId = null;
+    function toggleCustomLabelMenu(event, threadId) {
+        console.log('[DEBUG] toggleCustomLabelMenu called', { threadId, customLabelsCount: customLabels.length });
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Remove existing menu if any
+        const existingMenu = document.getElementById('customLabelMenu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+
+        // If clicking same thread, just close
+        if (currentLabelMenuThreadId === threadId) {
+            currentLabelMenuThreadId = null;
+            return;
+        }
+
+        currentLabelMenuThreadId = threadId;
+
+        // Create menu
+        const menu = document.createElement('div');
+        menu.id = 'customLabelMenu';
+        menu.className = 'absolute top-full right-0 mt-1 bg-white dark:bg-gray-700 rounded-lg shadow-lg p-2 z-50 min-w-48 border dark:border-gray-600';
+        menu.style.maxHeight = '300px';
+        menu.style.overflowY = 'auto';
+
+        if (customLabels.length === 0) {
+            console.log('[DEBUG] No custom labels available');
+            menu.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-xs p-2">Ingen custom labels</p>';
+        } else {
+            console.log('[DEBUG] Creating menu with labels:', customLabels);
+            customLabels.forEach(label => {
+                const iconHtml = label.icon_path
+                    ? `<img src="${label.icon_path}" alt="${label.display_name}" style="width: 14px; height: 14px;">`
+                    : `<i class="fas fa-tag"></i>`;
+
+                const btn = document.createElement('button');
+                btn.className = 'w-full flex items-center space-x-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded text-left text-sm text-gray-800 dark:text-white';
+                btn.innerHTML = `
+                    <div class="w-6 h-6 rounded flex items-center justify-center" style="background-color: ${label.color}22; color: ${label.color};">
+                        ${iconHtml}
+                    </div>
+                    <span>${label.display_name}</span>
+                `;
+                btn.onclick = (e) => {
+                    console.log('[DEBUG] Custom label button clicked:', label.name);
+                    e.stopPropagation();
+                    toggleLabel(e, threadId, label.name);
+                    menu.remove();
+                    currentLabelMenuThreadId = null;
+                };
+                menu.appendChild(btn);
+            });
+        }
+
+        event.target.closest('.relative').appendChild(menu);
+        console.log('[DEBUG] Menu appended to DOM');
+
+        // Close menu when clicking elsewhere
+        setTimeout(() => {
+            document.addEventListener('click', function closeMenu() {
+                const menu = document.getElementById('customLabelMenu');
+                if (menu) {
+                    menu.remove();
+                }
+                currentLabelMenuThreadId = null;
+                document.removeEventListener('click', closeMenu);
+            }, 100);
+        });
+    }
+
+    // Load custom labels on page load
+    window.addEventListener('DOMContentLoaded', function () {
+        loadCustomLabels();
+    });
+
+</script>
+
+</body>
+</html>

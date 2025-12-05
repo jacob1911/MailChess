@@ -3,7 +3,6 @@ from flask import Flask, render_template, session, redirect, url_for
 from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from datetime import timedelta
-# --- REVERTED: Removed 'from flask_migrate import Migrate' ---
 
 # Load environment variables FIRST (before importing blueprints)
 load_dotenv('environ.env', override=True)
