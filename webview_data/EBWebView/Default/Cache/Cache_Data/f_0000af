@@ -32,7 +32,6 @@
 
         .wheel-spinning {
             animation: spin-wheel-keyframes 2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; 
-            /* Uses cubic-bezier for a more 'realistic' wheel start-fast-slow-stop effect */
         }
         /* -------------------------------- */
     </style>
@@ -58,7 +57,6 @@
 
     <script>
         // IMMEDIATE THEME CHECK: Runs before content loads
-        // This is necessary for a flicker-free dark mode experience
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
@@ -84,12 +82,13 @@
             </ul>
 
             <div class="flex items-center space-x-3">
-                <a href="/set_language/da" 
+                <!-- FIX: Call JavaScript function to use AJAX API endpoint -->
+                <a href="#" onclick="setLanguage('da'); return false;"
                    class="text-sm font-semibold p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-150" 
                    title="Skift til dansk">
                     🇩🇰
                 </a>
-                <a href="/set_language/en" 
+                <a href="#" onclick="setLanguage('en'); return false;"
                    class="text-sm font-semibold p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-150"
                    title="Skift til engelsk">
                     🇺🇸
@@ -223,7 +222,7 @@
                 </select>
                 <input type="number" id="threadCount" value="5" min="1" max="50" class="w-16 px-2 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-center">
                 <button id="fetchBtn" onclick="fetchNewThreads()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i id="fetchIcon" class="fas fa-download mr-2"></i> Hent</button>
-                <button id="syncBtn" onclick="syncExisting()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"><i id="syncIcon" class="fas fa-sync-alt mr-2"></i> Sync</button>
+                <button id="syncBtn" onclick="syncExisting()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"><i id="syncIcon" class="fas fa-sync-alt mr-2"></i> Synk.</button>
                 <button id="clearBtn" onclick="clearDatabase()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"><i id="clearIcon" class="fas fa-trash mr-2"></i> Ryd</button>
             </div>
         </div>
@@ -277,7 +276,7 @@
                             <i class="fas fa-envelope-open text-blue-500"></i>
                         </button>
                         <div class="relative">
-                            <button onclick="toggleCustomLabelMenu(event, 1)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                            <button onclick="toggleCustomLabelMenu(event, 1)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Brugerdefinerede labels">
                                 <i class="fas fa-tags text-purple-500"></i>
                             </button>
                         </div>
@@ -324,7 +323,7 @@
                             <i class="fas fa-envelope-open text-blue-500"></i>
                         </button>
                         <div class="relative">
-                            <button onclick="toggleCustomLabelMenu(event, 2)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                            <button onclick="toggleCustomLabelMenu(event, 2)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Brugerdefinerede labels">
                                 <i class="fas fa-tags text-purple-500"></i>
                             </button>
                         </div>
@@ -371,7 +370,7 @@
                             <i class="fas fa-envelope-open text-blue-500"></i>
                         </button>
                         <div class="relative">
-                            <button onclick="toggleCustomLabelMenu(event, 3)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                            <button onclick="toggleCustomLabelMenu(event, 3)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Brugerdefinerede labels">
                                 <i class="fas fa-tags text-purple-500"></i>
                             </button>
                         </div>
@@ -418,7 +417,7 @@
                             <i class="fas fa-envelope-open text-blue-500"></i>
                         </button>
                         <div class="relative">
-                            <button onclick="toggleCustomLabelMenu(event, 4)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                            <button onclick="toggleCustomLabelMenu(event, 4)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Brugerdefinerede labels">
                                 <i class="fas fa-tags text-purple-500"></i>
                             </button>
                         </div>
@@ -466,7 +465,7 @@
                             <i class="fas fa-envelope-open text-blue-500"></i>
                         </button>
                         <div class="relative">
-                            <button onclick="toggleCustomLabelMenu(event, 5)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                            <button onclick="toggleCustomLabelMenu(event, 5)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Brugerdefinerede labels">
                                 <i class="fas fa-tags text-purple-500"></i>
                             </button>
                         </div>
@@ -513,7 +512,7 @@
                             <i class="fas fa-envelope-open text-blue-500"></i>
                         </button>
                         <div class="relative">
-                            <button onclick="toggleCustomLabelMenu(event, 7)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                            <button onclick="toggleCustomLabelMenu(event, 7)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Brugerdefinerede labels">
                                 <i class="fas fa-tags text-purple-500"></i>
                             </button>
                         </div>
@@ -560,7 +559,7 @@
                             <i class="fas fa-envelope-open text-blue-500"></i>
                         </button>
                         <div class="relative">
-                            <button onclick="toggleCustomLabelMenu(event, 9)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                            <button onclick="toggleCustomLabelMenu(event, 9)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Brugerdefinerede labels">
                                 <i class="fas fa-tags text-purple-500"></i>
                             </button>
                         </div>
@@ -607,7 +606,7 @@
                             <i class="fas fa-envelope-open text-blue-500"></i>
                         </button>
                         <div class="relative">
-                            <button onclick="toggleCustomLabelMenu(event, 8)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                            <button onclick="toggleCustomLabelMenu(event, 8)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Brugerdefinerede labels">
                                 <i class="fas fa-tags text-purple-500"></i>
                             </button>
                         </div>
@@ -654,7 +653,7 @@
                             <i class="fas fa-envelope-open text-blue-500"></i>
                         </button>
                         <div class="relative">
-                            <button onclick="toggleCustomLabelMenu(event, 10)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                            <button onclick="toggleCustomLabelMenu(event, 10)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Brugerdefinerede labels">
                                 <i class="fas fa-tags text-purple-500"></i>
                             </button>
                         </div>
@@ -701,7 +700,7 @@
                             <i class="fas fa-envelope-open text-blue-500"></i>
                         </button>
                         <div class="relative">
-                            <button onclick="toggleCustomLabelMenu(event, 11)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                            <button onclick="toggleCustomLabelMenu(event, 11)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Brugerdefinerede labels">
                                 <i class="fas fa-tags text-purple-500"></i>
                             </button>
                         </div>
@@ -739,7 +738,36 @@
 
 
     <script>
-        // --- FIX: DARK MODE LOGIC ADDED ---
+        // --- LANGUAGE SWITCH FIX (AJAX API CALL + RELOAD) ---
+        async function setLanguage(lang_code) {
+             try {
+                // 1. Call the new Flask API endpoint to update the session variable
+                const response = await fetch(`http://127.0.0.1:5000/api/set_language/${lang_code}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+
+                if (data.success) {
+                    // 2. FORCE a full page reload to fetch the new translations
+                    // Adding true forces the browser to bypass its cache and request fresh content
+                    window.location.reload(true); 
+                } else {
+                    console.error("Failed to set language:", data.error);
+                }
+
+             } catch (error) {
+                 console.error("Network error during language change:", error);
+                 // Fallback to absolute navigation as a last resort
+                 window.location.href = `http://127.0.0.1:5000/set_language/${lang_code}`;
+             }
+        }
+        // ----------------------------------------------------
+
+        // --- DARK MODE LOGIC (As previously confirmed) ---
 
         // Function to update the icon based on the current theme
         function updateThemeIcon() {
@@ -927,7 +955,7 @@
                 });
             }
         } catch (error) {
-            console.error('Error loading contacts:', error);
+            console.error('Fejl under indlæsning af kontakter:', error);
         }
     }
 
@@ -1107,7 +1135,7 @@
                 updateLabelFilter();
             }
         } catch (error) {
-            console.error('Error loading custom labels:', error);
+            console.error('Fejl under indlæsning af brugerdefinerede labels:', error);
         }
     }
 
@@ -1116,7 +1144,7 @@
         const container = document.getElementById('customLabelsList');
 
         if (customLabels.length === 0) {
-            container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Ingen custom labels endnu</p>';
+            container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Ingen brugerdefinerede labels endnu</p>';
             return;
         }
 
@@ -1202,7 +1230,7 @@
                 alert('Fejl: ' + data.error);
             }
         } catch (error) {
-            console.error('Error creating label:', error);
+            console.error('Fejl under oprettelse af label:', error);
             alert('Netværksfejl: ' + error.message);
         }
     });
@@ -1228,7 +1256,7 @@
                 alert('Fejl: ' + data.error);
             }
         } catch (error) {
-            console.error('Error deleting label:', error);
+            console.error('Fejl under sletning af label:', error);
             alert('Netværksfejl: ' + error.message);
         }
     }
@@ -1352,7 +1380,7 @@
                                 <div class="relative">
                                     <button onclick="toggleCustomLabelMenu(event, ${thread.id})"
                                             class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200"
-                                            title="Custom labels">
+                                            title="Brugerdefinerede labels">
                                         <i class="fas fa-tags text-purple-500"></i>
                                     </button>
                                 </div>
@@ -1377,7 +1405,7 @@
                 `;
             }
         } catch (error) {
-            console.error('Error updating thread list:', error);
+            console.error('Fejl under opdatering af trådliste:', error);
         }
     }
 
@@ -1497,7 +1525,7 @@
         }
 
         if (!threadItem) {
-            console.error('[ERROR] Could not find thread item for threadId:', threadId);
+            console.error('[ERROR] Kunne ikke finde tråd-element for threadId:', threadId);
             alert('Kunne ikke finde tråden');
             return;
         }
@@ -1534,7 +1562,7 @@
                 alert('Fejl: ' + data.error);
             }
         } catch (error) {
-            console.error('Error toggling label:', error);
+            console.error('Fejl under skift af label:', error);
             alert('Netværksfejl: ' + error.message);
         }
     }
@@ -1568,7 +1596,7 @@
                 alert('Fejl: ' + data.error);
             }
         } catch (error) {
-            console.error('Error marking as read:', error);
+            console.error('Fejl under markering som læst:', error);
             alert('Netværksfejl: ' + error.message);
         }
     }
@@ -1602,10 +1630,10 @@
         menu.style.overflowY = 'auto';
 
         if (customLabels.length === 0) {
-            console.log('[DEBUG] No custom labels available');
-            menu.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-xs p-2">Ingen custom labels</p>';
+            console.log('[DEBUG] Ingen brugerdefinerede labels tilgængelige');
+            menu.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-xs p-2">Ingen brugerdefinerede labels</p>';
         } else {
-            console.log('[DEBUG] Creating menu with labels:', customLabels);
+            console.log('[DEBUG] Opretter menu med labels:', customLabels);
             customLabels.forEach(label => {
                 const iconHtml = label.icon_path
                     ? `<img src="${label.icon_path}" alt="${label.display_name}" style="width: 14px; height: 14px;">`
@@ -1620,7 +1648,7 @@
                     <span>${label.display_name}</span>
                 `;
                 btn.onclick = (e) => {
-                    console.log('[DEBUG] Custom label button clicked:', label.name);
+                    console.log('[DEBUG] Brugerdefineret label-knap klikket:', label.name);
                     e.stopPropagation();
                     toggleLabel(e, threadId, label.name);
                     menu.remove();
@@ -1631,7 +1659,7 @@
         }
 
         event.target.closest('.relative').appendChild(menu);
-        console.log('[DEBUG] Menu appended to DOM');
+        console.log('[DEBUG] Menu tilføjet til DOM');
 
         // Close menu when clicking elsewhere
         setTimeout(() => {

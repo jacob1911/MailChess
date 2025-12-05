@@ -1,0 +1,359 @@
+# Danish translations for MailChess.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR EMAIL@ADDRESS, 2025.
+msgid ""
+msgstr ""
+"Project-Id-Version: MailChess\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-12-05 18:04+0100\n"
+"PO-Revision-Date: 2025-12-05 23:18+0100\n"
+"Last-Translator: FULL NAME EMAIL@ADDRESS\n"
+"Language: da\n"
+"Language-Team: da LL@li.org\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+#: app.py:92
+msgid "Siden blev ikke fundet"
+msgstr "Siden blev ikke fundet"
+#: app.py:97
+msgid "Der opstod en intern serverfejl"
+msgstr "Der opstod en intern serverfejl"
+#: app.py:103
+msgid "Der opstod en uventet fejl"
+msgstr "Der opstod en uventet fejl"
+#: templates/base.html:58 templates/inbox.html:3
+msgid "Indbakke"
+msgstr "Indbakke"
+#: templates/base.html:63 templates/inbox.html:40
+msgid "Statistik"
+msgstr "Statistik"
+#: templates/base.html:71
+msgid "Skift til dansk"
+msgstr "Skift til dansk"
+#: templates/base.html:76
+msgid "Skift til engelsk"
+msgstr "Skift til engelsk"
+#: templates/inbox.html:33
+msgid "Velkommen,"
+msgstr "Velkommen,"
+#: templates/inbox.html:37
+msgid "Ny tråd"
+msgstr "Ny tråd"
+#: templates/inbox.html:44
+msgid "Administrer labels"
+msgstr "Administrer labels"
+#: templates/inbox.html:50
+msgid "Træk Skæbnen"
+msgstr "Træk Skæbnen"
+#: templates/inbox.html:53
+msgid "Skift tema"
+msgstr "Skift tema"
+#: templates/inbox.html:57
+msgid "Log ud"
+msgstr "Log ud"
+#: templates/inbox.html:77
+msgid "Opret ny tråd"
+msgstr "Opret ny tråd"
+#: templates/inbox.html:81
+msgid "Modtager email"
+msgstr "Modtager email"
+#: templates/inbox.html:85
+msgid "modtager@example.com"
+msgstr "modtager@example.com"
+#: templates/inbox.html:90
+msgid "Emne"
+msgstr "Emne"
+#: templates/inbox.html:93
+msgid "Skal vi spille skak?"
+msgstr "Skal vi spille skak?"
+#: templates/inbox.html:97
+msgid "Opret tråd"
+msgstr "Opret tråd"
+#: templates/inbox.html:100
+msgid "Annuller"
+msgstr "Annuller"
+#: templates/inbox.html:109
+msgid "Administrer Labels"
+msgstr "Administrer Labels"
+#: templates/inbox.html:116
+msgid "Opret nyt label"
+msgstr "Opret nyt label"
+#: templates/inbox.html:119
+msgid "Label navn"
+msgstr "Label navn"
+#: templates/inbox.html:120
+msgid "Navn"
+msgstr "Navn"
+#: templates/inbox.html:124
+msgid "Farve"
+msgstr "Farve"
+#: templates/inbox.html:128
+msgid "Ikon"
+msgstr "Ikon"
+#: templates/inbox.html:132
+msgid "Opret"
+msgstr "Opret"
+#: templates/inbox.html:141
+msgid "Dine samtaler"
+msgstr "Dine samtaler"
+#: templates/inbox.html:145
+msgid "Alle labels"
+msgstr "Alle labels"
+#: templates/inbox.html:146
+msgid "Ulæste"
+msgstr "Ulæste"
+#: templates/inbox.html:147
+msgid "Stjernede"
+msgstr "Stjernede"
+#: templates/inbox.html:148
+msgid "Vigtige"
+msgstr "Vigtige"
+#: templates/inbox.html:149
+msgid "I indbakke"
+msgstr "I indbakke"
+#: templates/inbox.html:152
+msgid "Hent"
+msgstr "Hent"
+#: templates/inbox.html:153
+msgid "Sync"
+msgstr "Synk."
+#: templates/inbox.html:154
+msgid "Ryd"
+msgstr "Ryd"
+#: templates/inbox.html:200 templates/inbox.html:783
+msgid "Ingen beskeder endnu"
+msgstr "Ingen beskeder endnu"
+#: templates/inbox.html:209 templates/inbox.html:821
+msgid "Stjerne"
+msgstr "Stjerne"
+#: templates/inbox.html:212 templates/inbox.html:826
+msgid "Vigtig"
+msgstr "Vigtig"
+#: templates/inbox.html:215 templates/inbox.html:831
+msgid "Marker som læst"
+msgstr "Marker som læst"
+#: templates/inbox.html:219 templates/inbox.html:837
+msgid "Custom labels"
+msgstr "Brugerdefinerede labels"
+#: templates/inbox.html:230 templates/inbox.html:856 templates/inbox.html:914
+msgid "Ingen tråde endnu"
+msgstr "Ingen tråde endnu"
+#: templates/inbox.html:241 templates/inbox.html:270
+msgid "Hjulet Spinner..."
+msgstr "Hjulet Spinner..."
+#: templates/inbox.html:252 templates/inbox.html:388
+msgid "Bekræft Handling"
+msgstr "Bekræft Handling"
+#: templates/inbox.html:255
+msgid "Luk"
+msgstr "Luk"
+#: templates/inbox.html:306
+msgid "Skæbnen er Afgjort!"
+msgstr "Skæbnen er Afgjort!"
+#: templates/inbox.html:329 templates/inbox.html:340
+msgid "Du fik:"
+msgstr "Du fik:"
+#: templates/inbox.html:330
+msgid "Dette påvirker:"
+msgstr "Dette påvirker:"
+#: templates/inbox.html:330
+msgid "beskeder."
+msgstr "beskeder."
+#: templates/inbox.html:341
+msgid "0 beskeder fundet. Du slipper!"
+msgstr "0 beskeder fundet. Du slipper!"
+#: templates/inbox.html:346
+msgid "Fejl ved hjulet:"
+msgstr "Fejl ved hjulet:"
+#: templates/inbox.html:352
+msgid "Netværksfejl under spin."
+msgstr "Netværksfejl under spin."
+#: templates/inbox.html:362
+msgid "Udfører..."
+msgstr "Udfører..."
+#: templates/inbox.html:375
+#, python-format
+msgid "Succes! %s beskeder blev opdateret."
+msgstr "Succes! %s beskeder blev opdateret."
+#: templates/inbox.html:379
+msgid "Authentication er påkrævet. Log venligst ud og ind igen."
+msgstr "Authentication er påkrævet. Log venligst ud og ind igen."
+#: templates/inbox.html:382
+msgid "Fejl under handling:"
+msgstr "Fejl under handling:"
+#: templates/inbox.html:386
+msgid "Netværksfejl under handling."
+msgstr "Netværksfejl under handling."
+#: templates/inbox.html:412
+msgid "Error loading contacts:"
+msgstr "Fejl under indlæsning af kontakter:"
+#: templates/inbox.html:447
+#, python-format
+msgid "Henter sidste %s tråde..."
+msgstr "Henter sidste %s tråde..."
+#: templates/inbox.html:466
+msgid "Hentning fuldført!"
+msgstr "Hentning fuldført!"
+#: templates/inbox.html:468
+msgid "Nye tråde:"
+msgstr "Nye tråde:"
+#: templates/inbox.html:469
+msgid "Beskeder:"
+msgstr "Beskeder:"
+#: templates/inbox.html:489 templates/inbox.html:551 templates/inbox.html:688
+#: templates/inbox.html:714 templates/inbox.html:936 templates/inbox.html:1020
+#: templates/inbox.html:1054
+msgid "Netværksfejl:"
+msgstr "Netværksfejl:"
+#: templates/inbox.html:509
+msgid "Synkroniserer eksisterende tråde..."
+msgstr "Synkroniserer eksisterende tråde..."
+#: templates/inbox.html:527
+msgid "Synkronisering fuldført!"
+msgstr "Synkronisering fuldført!"
+#: templates/inbox.html:529
+msgid "Opdaterede tråde:"
+msgstr "Opdaterede tråde:"
+#: templates/inbox.html:530
+msgid "Nye beskeder:"
+msgstr "Nye beskeder:"
+#: templates/inbox.html:531
+msgid "Træk parset:"
+msgstr "Træk parset:"
+#: templates/inbox.html:566
+msgid "Authentication fejl:"
+msgstr "Authentication fejl:"
+#: templates/inbox.html:569
+msgid "Log ud og ind igen"
+msgstr "Log ud og ind igen"
+#: templates/inbox.html:575 templates/inbox.html:684 templates/inbox.html:710
+#: templates/inbox.html:928 templates/inbox.html:1016 templates/inbox.html:1050
+msgid "Fejl:"
+msgstr "Fejl:"
+#: templates/inbox.html:592
+msgid "Error loading custom labels:"
+msgstr "Fejl under indlæsning af brugerdefinerede labels:"
+#: templates/inbox.html:601
+msgid "Ingen custom labels endnu"
+msgstr "Ingen brugerdefinerede labels endnu"
+#: templates/inbox.html:679
+#, python-format
+msgid "Label "%s" oprettet!"
+msgstr "Label "%s" oprettet!"
+#: templates/inbox.html:687
+msgid "Error creating label:"
+msgstr "Fejl under oprettelse af label:"
+#: templates/inbox.html:694
+#, python-format
+msgid "Er du sikker på at du vil slette labelet "%s"?"
+msgstr "Er du sikker på at du vil slette labelet "%s"?"
+#: templates/inbox.html:713
+msgid "Error deleting label:"
+msgstr "Fejl under sletning af label:"
+#: templates/inbox.html:857 templates/inbox.html:915
+msgid "Opret en ny tråd for at komme i gang!"
+msgstr "Opret en ny tråd for at komme i gang!"
+#: templates/inbox.html:862
+msgid "Error updating thread list:"
+msgstr "Fejl under opdatering af trådliste:"
+#: templates/inbox.html:869
+msgid ""
+"Er du sikker på at du vil rydde HELE databasen? Dette vil slette alle "
+"tråde, beskeder og spil permanent!"
+msgstr ""
+"Er du sikker på at du vil rydde HELE databasen? Dette vil slette alle "
+"tråde, beskeder og spil permanent!"
+#: templates/inbox.html:883
+msgid "Rydder database..."
+msgstr "Rydder database..."
+#: templates/inbox.html:901
+msgid "Database ryddet!"
+msgstr "Database ryddet!"
+#: templates/inbox.html:903
+msgid "Tråde slettet:"
+msgstr "Tråde slettet:"
+#: templates/inbox.html:904
+msgid "Beskeder slettet:"
+msgstr "Beskeder slettet:"
+#: templates/inbox.html:905
+msgid "Spil slettet:"
+msgstr "Spil slettet:"
+#: templates/inbox.html:982
+msgid "Could not find thread item for threadId:"
+msgstr "Kunne ikke finde tråd-element for threadId:"
+#: templates/inbox.html:983
+msgid "Kunne ikke finde tråden"
+msgstr "Kunne ikke finde tråden"
+#: templates/inbox.html:1019
+msgid "Error toggling label:"
+msgstr "Fejl under skift af label:"
+#: templates/inbox.html:1053
+msgid "Error marking as read:"
+msgstr "Fejl under markering som læst:"
+#: templates/inbox.html:1087
+msgid "No custom labels available"
+msgstr "Ingen brugerdefinerede labels tilgængelige"
+#: templates/inbox.html:1088
+msgid "Ingen custom labels"
+msgstr "Ingen brugerdefinerede labels"
+#: templates/inbox.html:1090
+msgid "Creating menu with labels:"
+msgstr "Opretter menu med labels:"
+#: templates/inbox.html:1105
+msgid "Custom label button clicked:"
+msgstr "Brugerdefineret label-knap klikket:"
+#: templates/inbox.html:1116
+msgid "Menu appended to DOM"
+msgstr "Menu tilføjet til DOM"
+#: templates/login.html:6
+msgid "Login - MailChess"
+msgstr "Login - MailChess"
+#: templates/login.html:16
+msgid "Spil skak gennem Gmail"
+msgstr "Spil skak gennem Gmail"
+#: templates/login.html:25
+msgid "Husk mig på denne computer"
+msgstr "Husk mig på denne computer"
+#: templates/login.html:37
+msgid "Log ind med Google"
+msgstr "Log ind med Google"
+#: templates/login.html:47
+msgid "Vigtig information"
+msgstr "Vigtig information"
+#: templates/login.html:49
+msgid "Når du logger ind, skal du give følgende tilladelser:"
+msgstr "Når du logger ind, skal du give følgende tilladelser:"
+#: templates/login.html:51
+msgid "Læse dine Gmail emails"
+msgstr "Læse dine Gmail emails"
+#: templates/login.html:52
+msgid "Sende emails på dine vegne"
+msgstr "Sende emails på dine vegne"
+#: templates/login.html:54
+msgid "Uden disse tilladelser virker appen ikke."
+msgstr "Uden disse tilladelser virker appen ikke."
+#: templates/login.html:64
+msgid "Gmail Integration"
+msgstr "Gmail Integration"
+#: templates/login.html:65
+msgid "Spil skak gennem dine normale Gmail emails"
+msgstr "Spil skak gennem dine normale Gmail emails"
+#: templates/login.html:71
+msgid "Automatisk Synkronisering"
+msgstr "Automatisk Synkronisering"
+#: templates/login.html:72
+msgid "Dine træk opdateres automatisk fra emails"
+msgstr "Dine træk opdateres automatisk fra emails"
+#: templates/login.html:78
+msgid "Interaktivt Skakbræt"
+msgstr "Interaktivt Skakbræt"
+#: templates/login.html:79
+msgid "Lav træk direkte i browseren"
+msgstr "Lav træk direkte i browseren"
+#: templates/login.html:86
+msgid "Vi gemmer kun email metadata. Dine emails forbliver i din Gmail."
+msgstr "Vi gemmer kun email metadata. Dine emails forbliver i din Gmail."

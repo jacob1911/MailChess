@@ -1,6 +1,6 @@
 import os
 import secrets # REQUIRED for generating unique FLASK_SECRET_KEY
-from flask import Flask, render_template, session, redirect, url_for, request
+from flask import Flask, render_template, session, redirect, url_for, request, jsonify # <-- ADDED jsonify
 from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from datetime import timedelta
@@ -33,8 +33,13 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "instance", "mailchess.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# --- CRITICAL FIX FOR ABSOLUTE URLS (REQUIRED FOR _external=True) ---
+# Tells Flask its public face is the local host/port, ensuring URL generation works correctly.
+app.config['SERVER_NAME'] = '127.0.0.1:5000'
+# ------------------------------------------------------------------
+
 # --- FLASK SECRET KEY GENERATION (ZERO-SETUP IMPLEMENTATION) ---
-# 1. Check if FLASK_SECRET_KEY is provided in the environment (e.g., via a developer's environ.env)
+# 1. Check if FLASK_SECRET_KEY is provided in the environment (e.g., via environ.env)
 provided_secret = os.environ.get("FLASK_SECRET_KEY")
 
 if provided_secret is None:
@@ -127,20 +132,14 @@ def handle_exception(error):
     return render_template('error.html', error_code=500, error_message=_("Der opstod en uventet fejl")), 500 # <-- USED _()
 
 
-# --- NEW: Language Switch Route
-@app.route('/set_language/<lang_code>')
-def set_language(lang_code):
+# --- NEW: Language Switch API (FIXED FOR PYWEBVIEW) ---
+@app.route('/api/set_language/<lang_code>', methods=['POST'])
+def api_set_language(lang_code):
     if lang_code in ['en', 'da']:
         session['lang'] = lang_code
-    
-    # 1. Check for referrer (where the user came from)
-    referrer = request.referrer
-    if referrer and referrer.startswith(request.url_root):
-        # If the referrer is a URL within our app, redirect there.
-        return redirect(referrer)
-        
-    # 2. Otherwise, redirect to the main inbox page.
-    return redirect(url_for('mail.inbox'))
+        return jsonify(success=True, lang=lang_code)
+    return jsonify(success=False, error="Invalid language code"), 400
+# ------------------------------------------------------
 
 
 def init_db():
