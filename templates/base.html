@@ -41,7 +41,6 @@
 
     <script>
         // IMMEDIATE THEME CHECK: Runs before content loads
-        // This is necessary for a flicker-free dark mode experience
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
@@ -49,7 +48,7 @@
         }
     </script>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen text-gray-800 dark:text-gray-100 flex flex-col">
+<body class="bg-gradient-to-br from-blue-50 to indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen text-gray-800 dark:text-gray-100 flex flex-col">
 
     <nav class="p-4 bg-white/90 shadow-sm dark:bg-gray-900/90 transition-colors duration-200">
         <div class="container mx-auto flex justify-between items-center">
@@ -67,12 +66,13 @@
             </ul>
 
             <div class="flex items-center space-x-3">
-                <a href="{{ url_for('set_language', lang_code='da') }}" 
+                <!-- FIX: Use onclick and force window.location.href to reliably navigate -->
+                <a href="#" onclick="setLanguage('da'); return false;"
                    class="text-sm font-semibold p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-150" 
                    title="{{ _('Skift til dansk') }}">
                     🇩🇰
                 </a>
-                <a href="{{ url_for('set_language', lang_code='en') }}" 
+                <a href="#" onclick="setLanguage('en'); return false;"
                    class="text-sm font-semibold p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-150"
                    title="{{ _('Skift til engelsk') }}">
                     🇺🇸
@@ -87,7 +87,15 @@
     {% block content %}{% endblock %}
 
     <script>
-        // --- FIX: DARK MODE LOGIC ADDED ---
+        // --- LANGUAGE SWITCH FIX (CRITICAL FOR PYWEBVIEW) ---
+        // This function forces the window to navigate using the absolute URL of the local server.
+        function setLanguage(lang_code) {
+             // The server is hosted on 127.0.0.1:5000 (as defined in desktop_main.py)
+             window.location.href = `http://127.0.0.1:5000/set_language/${lang_code}`;
+        }
+        // ----------------------------------------------------
+
+        // --- DARK MODE LOGIC (As previously confirmed) ---
 
         // Function to update the icon based on the current theme
         function updateThemeIcon() {

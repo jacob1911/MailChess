@@ -126,14 +126,21 @@ def handle_exception(error):
     app.logger.error(f"Unhandled exception: {error}")
     return render_template('error.html', error_code=500, error_message=_("Der opstod en uventet fejl")), 500 # <-- USED _()
 
-# --- NEW: Language Switch Route ---
+
+# --- NEW: Language Switch Route
 @app.route('/set_language/<lang_code>')
 def set_language(lang_code):
     if lang_code in ['en', 'da']:
         session['lang'] = lang_code
-    # Redirect back to the page the user was on, or the inbox as a fallback
-    return redirect(request.referrer or url_for('mail.inbox'))
-# ----------------------------------
+    
+    # 1. Check for referrer (where the user came from)
+    referrer = request.referrer
+    if referrer and referrer.startswith(request.url_root):
+        # If the referrer is a URL within our app, redirect there.
+        return redirect(referrer)
+        
+    # 2. Otherwise, redirect to the main inbox page.
+    return redirect(url_for('mail.inbox'))
 
 
 def init_db():
