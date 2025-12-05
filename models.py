@@ -51,7 +51,7 @@ class Message(db.Model):
     move = db.Column(db.String(20), nullable=True)  # Chess move in UCI format
     evaluation_score = db.Column(db.Integer, nullable=True)  # Stockfish centipawn evaluation
     
-    # NEW FIELD: Tracks local status (Active, Trashed, Deleted). Default to 'Active'
+    # NEW FIELD: Tracks local status (Active, Trashed, Deleted). 
     status = db.Column(db.String(20), default='Active', index=True, nullable=False)
 
 

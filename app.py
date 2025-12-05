@@ -3,6 +3,7 @@ from flask import Flask, render_template, session, redirect, url_for
 from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from datetime import timedelta
+# --- REVERTED: Removed 'from flask_migrate import Migrate' ---
 
 # Load environment variables FIRST (before importing blueprints)
 load_dotenv('environ.env', override=True)
@@ -15,7 +16,7 @@ print("---------------------------------------------------")
 from models import db
 from blueprints.auth import auth_bp, init_oauth
 from blueprints.mail import mail_bp
-from blueprints.stats import stats_bp  # Import the new stats blueprint
+from blueprints.stats import stats_bp
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -32,7 +33,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=31)
 # --- BLUEPRINT REGISTRATION ---
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(mail_bp, url_prefix='/')
-app.register_blueprint(stats_bp, url_prefix='/mail_stats') # Register the stats blueprint
+app.register_blueprint(stats_bp, url_prefix='/mail_stats')
 # ------------------------------
 
 # Upload configuration
@@ -47,20 +48,19 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # Initialize database
 db.init_app(app)
 
+# --- REVERTED: Removed 'migrate = Migrate(app, db)' ---
+
 # Initialize OAuth
 oauth = OAuth(app)
 oauth.register(
     name="google",
-    # --- CRITICAL FIX: Include client_id and client_secret here ---
     client_id=os.environ.get("GOOGLE_CLIENT_ID"),
     client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
-    # ---------------------------------------------------------------
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={
-        # Full scope for Sending AND Reading (IMAP)
         "scope": "openid email profile https://mail.google.com/",
         "access_type": "offline",
-        "prompt": "consent"  # Force consent to get Refresh Token
+        "prompt": "consent"
     }
 )
 
