@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}MailChess - Inbox{% endblock %}
+{% block title %}MailChess - {{ _('Indbakke') }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -30,31 +30,31 @@
                     <i class="fas fa-chess-knight text-indigo-600 dark:text-indigo-400 mr-3"></i>
                     MailChess
                 </h1>
-                <p class="text-gray-600 dark:text-gray-300 mt-1">Velkommen, {{ user.name }}</p>
+                <p class="text-gray-600 dark:text-gray-300 mt-1">{{ _('Velkommen,') }} {{ user.name }}</p>
             </div>
             <div class="flex items-center space-x-3">
                 <button onclick="toggleNewThread()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center shadow-md">
-                    <i class="fas fa-plus mr-2"></i> Ny tråd
+                    <i class="fas fa-plus mr-2"></i> {{ _('Ny tråd') }}
                 </button>
                 
-                <a href="{{ url_for('stats.index') }}" class="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Statistik">
+                <a href="{{ url_for('stats.index') }}" class="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="{{ _('Statistik') }}">
                     <i class="fas fa-chart-pie"></i>
                 </a>
 
-                <button onclick="toggleLabelManager()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Administrer labels">
+                <button onclick="toggleLabelManager()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="{{ _('Administrer labels') }}">
                     <i class="fas fa-tags"></i>
                 </button>
                 
                 <button onclick="openWheelModal()"
                     class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center shadow-md">
-                    <i class="fas fa-magic mr-2"></i> Træk Skæbnen
+                    <i class="fas fa-magic mr-2"></i> {{ _('Træk Skæbnen') }}
                 </button>
 
-                <button onclick="toggleDarkMode()" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-yellow-300 font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Skift tema">
+                <button onclick="toggleDarkMode()" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-yellow-300 font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="{{ _('Skift tema') }}">
                     <i id="themeIcon" class="fas fa-moon"></i>
                 </button>
 
-                <a href="{{ url_for('auth.logout') }}" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Log ud">
+                <a href="{{ url_for('auth.logout') }}" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="{{ _('Log ud') }}">
                     <i class="fas fa-sign-out-alt"></i>
                 </a>
             </div>
@@ -74,30 +74,30 @@
 
     <div id="newThreadForm" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 transition-colors duration-200">
         <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
-            <i class="fas fa-envelope mr-2"></i> Opret ny tråd
+            <i class="fas fa-envelope mr-2"></i> {{ _('Opret ny tråd') }}
         </h2>
         <form method="POST" class="space-y-4">
             <div>
-                <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Modtager email</label>
+                <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">{{ _('Modtager email') }}</label>
                 <div class="relative">
                     <input type="email" name="new_mail" id="recipientInput" required list="contactList"
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
-                        placeholder="modtager@example.com" autocomplete="off">
+                        placeholder="{{ _('modtager@example.com') }}" autocomplete="off">
                     <datalist id="contactList"></datalist>
                 </div>
             </div>
             <div>
-                <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Emne</label>
+                <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">{{ _('Emne') }}</label>
                 <input type="text" name="subject" required
                     class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Skal vi spille skak?">
+                    placeholder="{{ _('Skal vi spille skak?') }}">
             </div>
             <div class="flex space-x-3">
                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200">
-                    <i class="fas fa-paper-plane mr-2"></i> Opret tråd
+                    <i class="fas fa-paper-plane mr-2"></i> {{ _('Opret tråd') }}
                 </button>
                 <button type="button" onclick="toggleNewThread()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-6 py-2 rounded-lg transition duration-200">
-                    Annuller
+                    {{ _('Annuller') }}
                 </button>
             </div>
         </form>
@@ -106,30 +106,30 @@
     <div id="labelManager" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 transition-colors duration-200">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold text-gray-800 dark:text-white">
-                <i class="fas fa-tags mr-2"></i> Administrer Labels
+                <i class="fas fa-tags mr-2"></i> {{ _('Administrer Labels') }}
             </h2>
             <button onclick="toggleLabelManager()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
         <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
-            <h3 class="font-semibold text-gray-700 dark:text-gray-200 mb-3">Opret nyt label</h3>
+            <h3 class="font-semibold text-gray-700 dark:text-gray-200 mb-3">{{ _('Opret nyt label') }}</h3>
             <form id="createLabelForm" class="space-y-3">
                 <div>
-                    <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1 text-sm">Label navn</label>
-                    <input type="text" id="labelName" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg" placeholder="Navn">
+                    <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1 text-sm">{{ _('Label navn') }}</label>
+                    <input type="text" id="labelName" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg" placeholder="{{ _('Navn') }}">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1 text-sm">Farve</label>
+                        <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1 text-sm">{{ _('Farve') }}</label>
                         <input type="color" id="labelColor" value="#6B7280" class="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer">
                     </div>
                     <div>
-                        <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1 text-sm">Ikon</label>
+                        <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1 text-sm">{{ _('Ikon') }}</label>
                         <input type="file" id="labelIcon" accept="image/*" class="w-full text-sm text-gray-500 dark:text-gray-400">
                     </div>
                 </div>
-                <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-lg">Opret</button>
+                <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-lg">{{ _('Opret') }}</button>
             </form>
         </div>
         <div id="customLabelsList" class="space-y-2"></div>
@@ -138,20 +138,20 @@
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 transition-colors duration-200">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold text-gray-800 dark:text-white">
-                <i class="fas fa-inbox mr-2"></i> Dine samtaler
+                <i class="fas fa-inbox mr-2"></i> {{ _('Dine samtaler') }}
             </h2>
             <div class="flex space-x-2 items-center">
                 <select id="labelFilter" onchange="filterThreads()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600">
-                    <option value="">Alle labels</option>
-                    <option value="UNREAD">Ulæste</option>
-                    <option value="STARRED">Stjernede</option>
-                    <option value="IMPORTANT">Vigtige</option>
-                    <option value="INBOX">I indbakke</option>
+                    <option value="">{{ _('Alle labels') }}</option>
+                    <option value="UNREAD">{{ _('Ulæste') }}</option>
+                    <option value="STARRED">{{ _('Stjernede') }}</option>
+                    <option value="IMPORTANT">{{ _('Vigtige') }}</option>
+                    <option value="INBOX">{{ _('I indbakke') }}</option>
                 </select>
                 <input type="number" id="threadCount" value="5" min="1" max="50" class="w-16 px-2 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-center">
-                <button id="fetchBtn" onclick="fetchNewThreads()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i id="fetchIcon" class="fas fa-download mr-2"></i> Hent</button>
-                <button id="syncBtn" onclick="syncExisting()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"><i id="syncIcon" class="fas fa-sync-alt mr-2"></i> Sync</button>
-                <button id="clearBtn" onclick="clearDatabase()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"><i id="clearIcon" class="fas fa-trash mr-2"></i> Ryd</button>
+                <button id="fetchBtn" onclick="fetchNewThreads()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i id="fetchIcon" class="fas fa-download mr-2"></i> {{ _('Hent') }}</button>
+                <button id="syncBtn" onclick="syncExisting()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"><i id="syncIcon" class="fas fa-sync-alt mr-2"></i> {{ _('Sync') }}</button>
+                <button id="clearBtn" onclick="clearDatabase()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"><i id="clearIcon" class="fas fa-trash mr-2"></i> {{ _('Ryd') }}</button>
             </div>
         </div>
 
@@ -197,7 +197,7 @@
                                     </div>
                                     <p class="text-sm text-gray-600 dark:text-gray-400">
                                         {% if t.other_person %}<span class="font-medium text-gray-900 dark:text-gray-300">{{ t.other_person.split('@')[0] }}</span> - {% endif %}
-                                        {{ t.snippet[:40] + '...' if t.snippet and t.snippet|length > 40 else t.snippet or 'Ingen beskeder endnu' }}
+                                        {{ t.snippet[:40] + '...' if t.snippet and t.snippet|length > 40 else t.snippet or _('Ingen beskeder endnu') }}
                                     </p>
                                 </div>
                             </div>
@@ -206,17 +206,17 @@
                     </a>
                     
                     <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
-                        <button onclick="toggleLabel(event, {{ t.id }}, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Stjerne">
+                        <button onclick="toggleLabel(event, {{ t.id }}, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="{{ _('Stjerne') }}">
                             <i class="fas fa-star text-yellow-500"></i>
                         </button>
-                        <button onclick="toggleLabel(event, {{ t.id }}, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Vigtig">
+                        <button onclick="toggleLabel(event, {{ t.id }}, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="{{ _('Vigtig') }}">
                             <i class="fas fa-exclamation text-red-500"></i>
                         </button>
-                        <button onclick="markAsRead(event, {{ t.id }})" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
+                        <button onclick="markAsRead(event, {{ t.id }})" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="{{ _('Marker som læst') }}">
                             <i class="fas fa-envelope-open text-blue-500"></i>
                         </button>
                         <div class="relative">
-                            <button onclick="toggleCustomLabelMenu(event, {{ t.id }})" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                            <button onclick="toggleCustomLabelMenu(event, {{ t.id }})" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="{{ _('Custom labels') }}">
                                 <i class="fas fa-tags text-purple-500"></i>
                             </button>
                         </div>
@@ -227,7 +227,7 @@
             {% else %}
             <div class="text-center py-12 text-gray-500 dark:text-gray-400">
                 <i class="fas fa-inbox text-6xl mb-4 opacity-50"></i>
-                <p>Ingen tråde endnu</p>
+                <p>{{ _('Ingen tråde endnu') }}</p>
             </div>
             {% endif %}
         </div>
@@ -238,7 +238,7 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 text-center transition-transform duration-300">
         
         <h2 id="wheelTitle" class="text-2xl font-bold text-gray-800 dark:text-white mb-6">
-            <i class="fas fa-spinner fa-spin text-yellow-500 mr-2"></i> Hjulet Spinner...
+            <i class="fas fa-spinner fa-spin text-yellow-500 mr-2"></i> {{ _('Hjulet Spinner...') }}
         </h2>
 
         <div id="wheelAnimation" class="h-24 flex items-center justify-center mb-6 text-yellow-500 text-6xl">
@@ -249,10 +249,10 @@
             </p>
 
         <button id="wheelActionButton" onclick="confirmWheelAction()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
-            Bekræft Handling
+            {{ _('Bekræft Handling') }}
         </button>
         <button onclick="closeWheelModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition duration-200">
-            Luk
+            {{ _('Luk') }}
         </button>
     </div>
 </div>
@@ -267,7 +267,7 @@
         const animationElement = document.getElementById('wheelAnimation');
         
         // 1. Reset and show loading state
-        document.getElementById('wheelTitle').innerHTML = '<i class="fas fa-spinner fa-spin text-yellow-500 mr-2"></i> Hjulet Spinner...';
+        document.getElementById('wheelTitle').innerHTML = '<i class="fas fa-spinner fa-spin text-yellow-500 mr-2"></i> {{ _("Hjulet Spinner...") }}';
         document.getElementById('wheelResultText').classList.add('hidden');
         document.getElementById('wheelActionButton').classList.add('hidden');
         document.getElementById('wheelModal').classList.remove('hidden');
@@ -303,7 +303,7 @@
                 const resultTextElement = document.getElementById('wheelResultText');
                 
                 // 2. Update the modal with the result
-                document.getElementById('wheelTitle').innerHTML = '<i class="fas fa-trophy text-green-500 mr-2"></i> Skæbnen er Afgjort!';
+                document.getElementById('wheelTitle').innerHTML = '<i class="fas fa-trophy text-green-500 mr-2"></i> {{ _("Skæbnen er Afgjort!") }}';
                 
                 // Set animation icon/text based on action
                 let icon = '';
@@ -323,9 +323,11 @@
                 animationElement.innerHTML = icon;
 
                 // Display the result message
+                // NOTE: Translating dynamic strings like this is difficult in JS.
+                // It is better to have the backend send a fully translated string for `description`.
                 resultTextElement.innerHTML = `
-                    Du fik: <span class="${color} font-bold">${wheelOutcome.description}</span><br>
-                    Dette påvirker: <span class="font-medium">${wheelOutcome.target_count} beskeder.</span>
+                    {{ _('Du fik:') }} <span class="${color} font-bold">${wheelOutcome.description}</span><br>
+                    {{ _('Dette påvirker:') }} <span class="font-medium">${wheelOutcome.target_count} {{ _('beskeder.') }}</span>
                 `;
                 resultTextElement.classList.remove('hidden');
 
@@ -335,19 +337,19 @@
                 } else if (wheelOutcome.action !== 'none' && wheelOutcome.target_count === 0) {
                     // Specific message if the action has 0 impact
                     resultTextElement.innerHTML = `
-                        Du fik: <span class="${color} font-bold">${wheelOutcome.description}</span><br>
-                        <span class="text-green-500 font-bold">0 beskeder fundet. Du slipper!</span>
+                        {{ _('Du fik:') }} <span class="${color} font-bold">${wheelOutcome.description}</span><br>
+                        <span class="text-green-500 font-bold">{{ _('0 beskeder fundet. Du slipper!') }}</span>
                     `;
                 }
 
             } else {
-                alert('Fejl ved hjulet: ' + data.error);
+                alert('{{ _("Fejl ved hjulet:") }} ' + data.error);
                 closeWheelModal();
             }
 
         } catch (error) {
             console.error('Network Error:', error);
-            alert('Netværksfejl under spin.');
+            alert('{{ _("Netværksfejl under spin.") }}');
             closeWheelModal();
         }
     }
@@ -357,7 +359,7 @@
 
         // Show loading state while action is confirmed
         const actionButton = document.getElementById('wheelActionButton');
-        actionButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Udfører...';
+        actionButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> {{ _("Udfører...") }}';
         actionButton.disabled = true;
 
         try {
@@ -370,20 +372,20 @@
             const data = await response.json();
 
             if (data.success) {
-                alert(`Succes! ${data.messages_affected} beskeder blev opdateret.`);
+                alert(`{{ _("Succes! %s beskeder blev opdateret.") }}`.replace('%s', data.messages_affected));
                 closeWheelModal();
                 location.reload(); // Reload to update thread list
             } else if (data.require_reauth) {
-                 alert('Authentication er påkrævet. Log venligst ud og ind igen.');
+                 alert('{{ _("Authentication er påkrævet. Log venligst ud og ind igen.") }}');
                  location.href = '{{ url_for("auth.logout") }}';
             } else {
-                alert('Fejl under handling: ' + data.error);
+                alert('{{ _("Fejl under handling:") }} ' + data.error);
             }
         } catch (error) {
             console.error('Execution Error:', error);
-            alert('Netværksfejl under handling.');
+            alert('{{ _("Netværksfejl under handling.") }}');
         } finally {
-            actionButton.innerHTML = 'Bekræft Handling';
+            actionButton.innerHTML = '{{ _("Bekræft Handling") }}';
             actionButton.disabled = false;
         }
     }
@@ -407,7 +409,7 @@
                 });
             }
         } catch (error) {
-            console.error('Error loading contacts:', error);
+            console.error('{{ _("Error loading contacts:") }}', error);
         }
     }
 
@@ -442,7 +444,7 @@
 
         // Show status message
         statusMessage.className = 'mb-4 p-3 rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100';
-        statusMessage.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Henter sidste ${threadCount} tråde...`;
+        statusMessage.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>{{ _('Henter sidste %s tråde...') }}`.replace('%s', threadCount);
         statusMessage.classList.remove('hidden');
 
         try {
@@ -461,10 +463,10 @@
                 statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
                 statusMessage.innerHTML = `
                     <i class="fas fa-check-circle mr-2"></i>
-                    <strong>Hentning fuldført!</strong><br>
+                    <strong>{{ _('Hentning fuldført!') }}</strong><br>
                     <small>
-                        Nye tråde: ${stats.threads_fetched} |
-                        Beskeder: ${stats.messages_added}
+                        {{ _('Nye tråde:') }} ${stats.threads_fetched} |
+                        {{ _('Beskeder:') }} ${stats.messages_added}
                     </small>
                 `;
 
@@ -484,7 +486,7 @@
             statusMessage.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
             statusMessage.innerHTML = `
                 <i class="fas fa-exclamation-circle mr-2"></i>
-                <strong>Netværksfejl:</strong> ${error.message}
+                <strong>{{ _('Netværksfejl:') }}</strong> ${error.message}
             `;
         } finally {
             fetchBtn.disabled = false;
@@ -504,7 +506,7 @@
 
         // Show status message
         statusMessage.className = 'mb-4 p-3 rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100';
-        statusMessage.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Synkroniserer eksisterende tråde...';
+        statusMessage.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>{{ _("Synkroniserer eksisterende tråde...") }}';
         statusMessage.classList.remove('hidden');
 
         try {
@@ -522,11 +524,11 @@
                 statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
                 statusMessage.innerHTML = `
                     <i class="fas fa-check-circle mr-2"></i>
-                    <strong>Synkronisering fuldført!</strong><br>
+                    <strong>{{ _('Synkronisering fuldført!') }}</strong><br>
                     <small>
-                        Opdaterede tråde: ${stats.threads_updated} |
-                        Nye beskeder: ${stats.messages_added} |
-                        Træk parset: ${stats.moves_parsed}
+                        {{ _('Opdaterede tråde:') }} ${stats.threads_updated} |
+                        {{ _('Nye beskeder:') }} ${stats.messages_added} |
+                        {{ _('Træk parset:') }} ${stats.moves_parsed}
                     </small>
                 `;
 
@@ -546,7 +548,7 @@
             statusMessage.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
             statusMessage.innerHTML = `
                 <i class="fas fa-exclamation-circle mr-2"></i>
-                <strong>Netværksfejl:</strong> ${error.message}
+                <strong>{{ _('Netværksfejl:') }}</strong> ${error.message}
             `;
         } finally {
             syncBtn.disabled = false;
@@ -561,16 +563,16 @@
         if (data.require_reauth) {
             element.innerHTML = `
                 <i class="fas fa-exclamation-triangle mr-2"></i>
-                <strong>Authentication fejl:</strong> ${data.error}<br>
+                <strong>{{ _('Authentication fejl:') }}</strong> ${data.error}<br>
                 <button onclick="window.location.href='{{ url_for("auth.logout") }}'"
                         class="mt-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded">
-                    <i class="fas fa-sign-out-alt mr-2"></i>Log ud og ind igen
+                    <i class="fas fa-sign-out-alt mr-2"></i>{{ _('Log ud og ind igen') }}
                 </button>
             `;
         } else {
             element.innerHTML = `
                 <i class="fas fa-exclamation-circle mr-2"></i>
-                <strong>Fejl:</strong> ${data.error}
+                <strong>{{ _('Fejl:') }}</strong> ${data.error}
             `;
         }
     }
@@ -587,7 +589,7 @@
                 updateLabelFilter();
             }
         } catch (error) {
-            console.error('Error loading custom labels:', error);
+            console.error('{{ _("Error loading custom labels:") }}', error);
         }
     }
 
@@ -596,7 +598,7 @@
         const container = document.getElementById('customLabelsList');
 
         if (customLabels.length === 0) {
-            container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Ingen custom labels endnu</p>';
+            container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">{{ _("Ingen custom labels endnu") }}</p>';
             return;
         }
 
@@ -674,22 +676,22 @@
             const data = await response.json();
 
             if (data.success) {
-                alert(`Label "${data.label.display_name}" oprettet!`);
+                alert(`{{ _('Label "%s" oprettet!') }}`.replace('%s', data.label.display_name));
                 document.getElementById('createLabelForm').reset();
                 document.getElementById('labelColor').value = '#6B7280';
                 await loadCustomLabels();
             } else {
-                alert('Fejl: ' + data.error);
+                alert('{{ _("Fejl:") }} ' + data.error);
             }
         } catch (error) {
-            console.error('Error creating label:', error);
-            alert('Netværksfejl: ' + error.message);
+            console.error('{{ _("Error creating label:") }}', error);
+            alert('{{ _("Netværksfejl:") }} ' + error.message);
         }
     });
 
     // Delete custom label
     async function deleteCustomLabel(labelId, labelName) {
-        if (!confirm(`Er du sikker på at du vil slette labelet "${labelName}"?`)) {
+        if (!confirm(`{{ _('Er du sikker på at du vil slette labelet "%s"?') }}`.replace('%s', labelName))) {
             return;
         }
 
@@ -705,11 +707,11 @@
                 await loadCustomLabels();
                 await updateThreadList();
             } else {
-                alert('Fejl: ' + data.error);
+                alert('{{ _("Fejl:") }} ' + data.error);
             }
         } catch (error) {
-            console.error('Error deleting label:', error);
-            alert('Netværksfejl: ' + error.message);
+            console.error('{{ _("Error deleting label:") }}', error);
+            alert('{{ _("Netværksfejl:") }} ' + error.message);
         }
     }
 
@@ -778,7 +780,7 @@
                     // Format snippet with person name
                     let snippetText = thread.snippet ?
                         (thread.snippet.length > 40 ? thread.snippet.substring(0, 40) + '...' : thread.snippet) :
-                        'Ingen beskeder endnu';
+                        '{{ _("Ingen beskeder endnu") }}'; // Localization here
 
                     let snippetHtml = otherPersonName ?
                         `<span class="font-medium text-gray-900 dark:text-gray-300">${otherPersonName}</span> - ${snippetText}` :
@@ -816,23 +818,23 @@
                             <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
                                 <button onclick="toggleLabel(event, ${thread.id}, 'STARRED')"
                                         class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200"
-                                        title="Stjerne">
+                                        title="{{ _('Stjerne') }}">
                                     <i class="fas fa-star text-yellow-500"></i>
                                 </button>
                                 <button onclick="toggleLabel(event, ${thread.id}, 'IMPORTANT')"
                                         class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200"
-                                        title="Vigtig">
+                                        title="{{ _('Vigtig') }}">
                                     <i class="fas fa-exclamation text-red-500"></i>
                                 </button>
                                 <button onclick="markAsRead(event, ${thread.id})"
                                         class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200"
-                                        title="Marker som læst">
+                                        title="{{ _('Marker som læst') }}">
                                     <i class="fas fa-envelope-open text-blue-500"></i>
                                 </button>
                                 <div class="relative">
                                     <button onclick="toggleCustomLabelMenu(event, ${thread.id})"
                                             class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200"
-                                            title="Custom labels">
+                                            title="{{ _('Custom labels') }}">
                                         <i class="fas fa-tags text-purple-500"></i>
                                     </button>
                                 </div>
@@ -851,20 +853,20 @@
                 threadsList.innerHTML = `
                     <div class="text-center py-12 text-gray-500 dark:text-gray-400">
                         <i class="fas fa-inbox text-6xl mb-4 opacity-50"></i>
-                        <p class="text-lg">Ingen tråde endnu</p>
-                        <p class="text-sm">Opret en ny tråd for at komme i gang!</p>
+                        <p class="text-lg">{{ _('Ingen tråde endnu') }}</p>
+                        <p class="text-sm">{{ _('Opret en ny tråd for at komme i gang!') }}</p>
                     </div>
                 `;
             }
         } catch (error) {
-            console.error('Error updating thread list:', error);
+            console.error('{{ _("Error updating thread list:") }}', error);
         }
     }
 
     // Clear database
     async function clearDatabase() {
         // Confirm before clearing
-        if (!confirm('Er du sikker på at du vil rydde HELE databasen? Dette vil slette alle tråde, beskeder og spil permanent!')) {
+        if (!confirm('{{ _("Er du sikker på at du vil rydde HELE databasen? Dette vil slette alle tråde, beskeder og spil permanent!") }}')) {
             return;
         }
 
@@ -878,7 +880,7 @@
 
         // Show status message
         statusMessage.className = 'mb-4 p-3 rounded-lg bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-100';
-        statusMessage.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Rydder database...';
+        statusMessage.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>{{ _("Rydder database...") }}';
         statusMessage.classList.remove('hidden');
 
         try {
@@ -896,11 +898,11 @@
                 statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
                 statusMessage.innerHTML = `
                     <i class="fas fa-check-circle mr-2"></i>
-                    <strong>Database ryddet!</strong><br>
+                    <strong>{{ _('Database ryddet!') }}</strong><br>
                     <small>
-                        Tråde slettet: ${stats.threads_deleted} |
-                        Beskeder slettet: ${stats.messages_deleted} |
-                        Spil slettet: ${stats.games_deleted}
+                        {{ _('Tråde slettet:') }} ${stats.threads_deleted} |
+                        {{ _('Beskeder slettet:') }} ${stats.messages_deleted} |
+                        {{ _('Spil slettet:') }} ${stats.games_deleted}
                     </small>
                 `;
 
@@ -909,8 +911,8 @@
                 threadsList.innerHTML = `
                     <div class="text-center py-12 text-gray-500 dark:text-gray-400">
                         <i class="fas fa-inbox text-6xl mb-4 opacity-50"></i>
-                        <p class="text-lg">Ingen tråde endnu</p>
-                        <p class="text-sm">Opret en ny tråd for at komme i gang!</p>
+                        <p class="text-lg">{{ _('Ingen tråde endnu') }}</p>
+                        <p class="text-sm">{{ _('Opret en ny tråd for at komme i gang!') }}</p>
                     </div>
                 `;
 
@@ -923,7 +925,7 @@
                 statusMessage.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
                 statusMessage.innerHTML = `
                     <i class="fas fa-exclamation-circle mr-2"></i>
-                    <strong>Fejl:</strong> ${data.error}
+                    <strong>{{ _('Fejl:') }}</strong> ${data.error}
                 `;
             }
 
@@ -931,7 +933,7 @@
             statusMessage.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
             statusMessage.innerHTML = `
                 <i class="fas fa-exclamation-circle mr-2"></i>
-                <strong>Netværksfejl:</strong> ${error.message}
+                <strong>{{ _('Netværksfejl:') }}</strong> ${error.message}
             `;
         } finally {
             clearBtn.disabled = false;
@@ -977,8 +979,8 @@
         }
 
         if (!threadItem) {
-            console.error('[ERROR] Could not find thread item for threadId:', threadId);
-            alert('Kunne ikke finde tråden');
+            console.error('[ERROR] {{ _("Could not find thread item for threadId:") }}', threadId);
+            alert('{{ _("Kunne ikke finde tråden") }}');
             return;
         }
 
@@ -1011,11 +1013,11 @@
                 alert(data.error);
                 window.location.href = '{{ url_for("auth.logout") }}';
             } else {
-                alert('Fejl: ' + data.error);
+                alert('{{ _("Fejl:") }} ' + data.error);
             }
         } catch (error) {
-            console.error('Error toggling label:', error);
-            alert('Netværksfejl: ' + error.message);
+            console.error('{{ _("Error toggling label:") }}', error);
+            alert('{{ _("Netværksfejl:") }} ' + error.message);
         }
     }
 
@@ -1045,11 +1047,11 @@
                 alert(data.error);
                 window.location.href = '{{ url_for("auth.logout") }}';
             } else {
-                alert('Fejl: ' + data.error);
+                alert('{{ _("Fejl:") }} ' + data.error);
             }
         } catch (error) {
-            console.error('Error marking as read:', error);
-            alert('Netværksfejl: ' + error.message);
+            console.error('{{ _("Error marking as read:") }}', error);
+            alert('{{ _("Netværksfejl:") }} ' + error.message);
         }
     }
 
@@ -1082,10 +1084,10 @@
         menu.style.overflowY = 'auto';
 
         if (customLabels.length === 0) {
-            console.log('[DEBUG] No custom labels available');
-            menu.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-xs p-2">Ingen custom labels</p>';
+            console.log('[DEBUG] {{ _("No custom labels available") }}');
+            menu.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-xs p-2">{{ _("Ingen custom labels") }}</p>';
         } else {
-            console.log('[DEBUG] Creating menu with labels:', customLabels);
+            console.log('[DEBUG] {{ _("Creating menu with labels:") }}', customLabels);
             customLabels.forEach(label => {
                 const iconHtml = label.icon_path
                     ? `<img src="${label.icon_path}" alt="${label.display_name}" style="width: 14px; height: 14px;">`
@@ -1100,7 +1102,7 @@
                     <span>${label.display_name}</span>
                 `;
                 btn.onclick = (e) => {
-                    console.log('[DEBUG] Custom label button clicked:', label.name);
+                    console.log('[DEBUG] {{ _("Custom label button clicked:") }}', label.name);
                     e.stopPropagation();
                     toggleLabel(e, threadId, label.name);
                     menu.remove();
@@ -1111,7 +1113,7 @@
         }
 
         event.target.closest('.relative').appendChild(menu);
-        console.log('[DEBUG] Menu appended to DOM');
+        console.log('[DEBUG] {{ _("Menu appended to DOM") }}');
 
         // Close menu when clicking elsewhere
         setTimeout(() => {

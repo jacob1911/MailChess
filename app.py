@@ -1,8 +1,9 @@
 import os
-from flask import Flask, render_template, session, redirect, url_for
+from flask import Flask, render_template, session, redirect, url_for, request # <-- ADDED request
 from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from datetime import timedelta
+from flask_babel import Babel, gettext as _ # <-- ADDED
 
 # Load environment variables FIRST (before importing blueprints)
 load_dotenv('environ.env', override=True)
@@ -28,6 +29,25 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret")
 # This keeps the login cookie valid for 31 days if requested
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=31)
 # --------------------------------------
+
+# --- BABEL/LOCALIZATION CONFIGURATION --- <-- ADDED
+app.config['BABEL_DEFAULT_LOCALE'] = 'da' # Default to Danish since templates are currently Danish
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+babel = Babel(app)
+
+@babel.localeselector
+def get_locale():
+    # 1. Check if language is explicitly set in session (via switch)
+    if 'lang' in session:
+        return session['lang']
+    # 2. Check the language accepted by the browser
+    return request.accept_languages.best_match(['da', 'en'])
+
+@app.context_processor
+def inject_gettext():
+    # Make _() available directly in templates without passing it
+    return dict(_=_)
+# ----------------------------------------
 
 # --- BLUEPRINT REGISTRATION ---
 app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -69,18 +89,28 @@ init_oauth(oauth)
 # Error handlers
 @app.errorhandler(404)
 def not_found_error(error):
-    return render_template('error.html', error_code=404, error_message="Siden blev ikke fundet"), 404
+    return render_template('error.html', error_code=404, error_message=_("Siden blev ikke fundet")), 404 # <-- USED _()
 
 @app.errorhandler(500)
 def internal_error(error):
     db.session.rollback()
-    return render_template('error.html', error_code=500, error_message="Der opstod en intern serverfejl"), 500
+    return render_template('error.html', error_code=500, error_message=_("Der opstod en intern serverfejl")), 500 # <-- USED _()
 
 @app.errorhandler(Exception)
 def handle_exception(error):
     db.session.rollback()
     app.logger.error(f"Unhandled exception: {error}")
-    return render_template('error.html', error_code=500, error_message="Der opstod en uventet fejl"), 500
+    return render_template('error.html', error_code=500, error_message=_("Der opstod en uventet fejl")), 500 # <-- USED _()
+
+# --- NEW: Language Switch Route ---
+@app.route('/set_language/<lang_code>')
+def set_language(lang_code):
+    if lang_code in ['en', 'da']:
+        session['lang'] = lang_code
+    # Redirect back to the page the user was on, or the inbox as a fallback
+    return redirect(request.referrer or url_for('mail.inbox'))
+# ----------------------------------
+
 
 def init_db():
     """Initialize database tables"""
