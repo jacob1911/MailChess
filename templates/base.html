@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="da">
+<html lang="{{ session.get('lang', 'da') }}" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,6 +41,7 @@
 
     <script>
         // IMMEDIATE THEME CHECK: Runs before content loads
+        // This is necessary for a flicker-free dark mode experience
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
@@ -86,7 +87,38 @@
     {% block content %}{% endblock %}
 
     <script>
-        // ... (existing JS functions)
+        // --- FIX: DARK MODE LOGIC ADDED ---
+
+        // Function to update the icon based on the current theme
+        function updateThemeIcon() {
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            // 1. Update the icon in the Navbar (navThemeIcon)
+            const navIcon = document.getElementById('navThemeIcon');
+            if (navIcon) {
+                navIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+
+            // 2. Update the icon in the Inbox Toolbar (themeIcon, if it exists)
+            const toolbarIcon = document.getElementById('themeIcon');
+            if (toolbarIcon) { 
+                toolbarIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+
+        // Function to toggle the theme
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            
+            if (isDark) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+
+            // Update the icon after the theme has been toggled
+            updateThemeIcon();
+        }
 
         // Run on load
         document.addEventListener('DOMContentLoaded', updateThemeIcon);

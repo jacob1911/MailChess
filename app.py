@@ -30,18 +30,21 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret")
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=31)
 # --------------------------------------
 
-# --- BABEL/LOCALIZATION CONFIGURATION --- <-- ADDED
+# --- BABEL/LOCALIZATION CONFIGURATION --- <-- FIXED FOR BABEL 4.0.0
 app.config['BABEL_DEFAULT_LOCALE'] = 'da' # Default to Danish since templates are currently Danish
 app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
 babel = Babel(app)
 
-@babel.localeselector
+# --- FIX: Define the selector function without the failing decorator ---
 def get_locale():
     # 1. Check if language is explicitly set in session (via switch)
     if 'lang' in session:
         return session['lang']
     # 2. Check the language accepted by the browser
     return request.accept_languages.best_match(['da', 'en'])
+
+# --- FIX: Register the selector function with the Babel instance property ---
+babel.locale_selector = get_locale
 
 @app.context_processor
 def inject_gettext():
