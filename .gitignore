@@ -7,6 +7,9 @@ instance/
 *.db
 *.sqlite
 
+# Webview data (browser cache/cookies for desktop app)
+webview_data/
+
 # Python
 __pycache__/
 *.py[cod]

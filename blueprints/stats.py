@@ -118,10 +118,14 @@ def index():
     sender_stat = most_sent_sender if most_sent_sender else ("Ingen", 0)
     receiver_stat = most_sent_receiver if most_sent_receiver else ("Ingen", 0)
 
-    # --- Text Analysis (Only for emails sent BY YOU) ---
+    # --- Text Analysis (ALL emails in database) ---
+    all_messages = Message.query.filter_by(user_id=user_id).all()
+
+    text_stats = analyze_text(all_messages)
+
+    # Also get stats for just sent messages for comparison
     sent_messages = Message.query.filter_by(user_id=user_id, sender=user_email).all()
-    
-    text_stats = analyze_text(sent_messages)
+    sent_text_stats = analyze_text(sent_messages)
 
     return render_template(
         "mail_stats.html",
@@ -130,9 +134,14 @@ def index():
         unread=unread_emails,
         most_sender=sender_stat,
         most_receiver=receiver_stat,
-        # Pass new stats
+        # Pass stats for ALL messages
         top_words=text_stats['top_words'],
         top_starters=text_stats['top_starters'],
         top_bad_words=text_stats['top_bad_words'],
+        # Pass stats for SENT messages
+        sent_top_words=sent_text_stats['top_words'],
+        sent_top_starters=sent_text_stats['top_starters'],
+        sent_top_bad_words=sent_text_stats['top_bad_words'],
+        total_analyzed=len(all_messages),
         sent_count=len(sent_messages)
     )

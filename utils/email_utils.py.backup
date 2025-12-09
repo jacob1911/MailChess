@@ -209,8 +209,8 @@ def extract_chess_move(body):
     if not body:
         return None
 
-    # Search for chess move notation
-    match = re.search(r'([a-h][1-8][a-h][1-8][qrbn]?)', body, re.IGNORECASE)
+    # Search for "Move: " followed by chess move notation
+    match = re.search(r'Move:\s*([a-h][1-8][a-h][1-8][qrbn]?)', body, re.IGNORECASE)
     if match:
         return match.group(1).lower()
     return None
@@ -288,17 +288,18 @@ def store_thread(user_id, thread_emails):
             msg = email_data
             gmail_message_id = msg.get("Message-ID")  # Fallback to RFC Message-ID
 
-        if not gmail_message_id:
-            print(f"Warning: No Gmail message ID found for message, skipping")
-            continue
-
-        # Check if message already exists
+        # Using gmail_message_id index for lookup:
         existing_msg = Message.query.filter_by(
             gmail_message_id=gmail_message_id,
             thread_id=new_thread.id
         ).first()
 
         if existing_msg:
+            # Message already exists, skip
+            continue
+
+        if not gmail_message_id:
+            print(f"Warning: No Gmail message ID found for message, skipping")
             continue
 
         body, is_html = get_body_from_msg(msg)
@@ -376,7 +377,6 @@ def update_thread_fen(thread, move_uci):
     except Exception as e:
         print(f"Error updating FEN: {e}")
 
-
 def smtp_send_email(user_email, access_token, to, subject, body):
     """Send email via Gmail SMTP with OAuth"""
     try:
@@ -436,6 +436,11 @@ def caesar_decrypt(text, shift=3):
     return caesar_encrypt(text, -shift)
 
 
+def generate_oauth2_string(user_email, access_token):
+    auth_string = f"user={user_email}\x01auth=Bearer {access_token}\x01\x01"
+    return auth_string.encode("utf-8")
+
+
 def fetch_new_threads(user_id, user_email, access_token, count=5):
     """
     Fetch last X new email threads from Gmail that don't exist in local database
@@ -449,8 +454,9 @@ def fetch_new_threads(user_id, user_email, access_token, count=5):
 
     try:
         imap = imaplib.IMAP4_SSL("imap.gmail.com", port=993)
-        auth_string = f"user={user_email}\1auth=Bearer {access_token}\1\1"
-        imap.authenticate("XOAUTH2", lambda x: auth_string.encode("utf-8"))
+        # Use helper to generate Base64-encoded XOAUTH2 auth string (bytes)
+        auth_string = generate_oauth2_string(user_email, access_token)
+        imap.authenticate("XOAUTH2", lambda x: auth_string)
         imap.select("INBOX")
 
         # Get all email IDs
@@ -463,24 +469,10 @@ def fetch_new_threads(user_id, user_email, access_token, count=5):
 
         print(f"Found {len(ids)} emails in Gmail inbox")
 
-        # OPTIMIZATION: Get existing thread IDs from database FIRST (fast query with index)
-        existing_threads = Thread.query.filter_by(user_id=user_id).with_entities(Thread.gmail_thread_id).all()
-        existing_thread_ids = set(thread.gmail_thread_id for thread in existing_threads)
-        print(f"User has {len(existing_thread_ids)} existing threads in database")
-
-        # Step 1: Process emails from NEWEST to OLDEST, stop when we have enough new threads
+        # Step 1: Collect all thread IDs with their latest email timestamp
         thread_timestamps = {}  # {gmail_thread_id: (mail_id, timestamp)}
-        new_threads_found = 0
 
-        # Reverse the IDs to process newest first
-        ids_reversed = list(reversed(ids))
-
-        for mail_id in ids_reversed:
-            # Stop early if we already found enough new threads
-            if new_threads_found >= count * 2:  # Get 2x to account for duplicates
-                print(f"Early stop: found {new_threads_found} new threads, processing stopped")
-                break
-
+        for mail_id in ids:
             try:
                 # Only fetch metadata to find thread IDs and dates
                 result, msg_data = imap.fetch(mail_id, "(X-GM-THRID INTERNALDATE)")
@@ -504,30 +496,36 @@ def fetch_new_threads(user_id, user_email, access_token, count=5):
                     timestamp = parsedate_to_datetime(match.group(1))
 
                 if gmail_thread_id and timestamp:
-                    # Skip if thread already exists in database
-                    if gmail_thread_id in existing_thread_ids:
-                        continue
-
-                    # Keep track of the latest email in each NEW thread
-                    if gmail_thread_id not in thread_timestamps:
-                        new_threads_found += 1
-                        thread_timestamps[gmail_thread_id] = (mail_id, timestamp)
-                    elif timestamp > thread_timestamps[gmail_thread_id][1]:
+                    # Keep track of the latest email in each thread
+                    if gmail_thread_id not in thread_timestamps or timestamp > thread_timestamps[gmail_thread_id][1]:
                         thread_timestamps[gmail_thread_id] = (mail_id, timestamp)
 
             except Exception as e:
                 stats['errors'].append(f"Error fetching thread metadata: {str(e)}")
                 continue
 
-        print(f"Found {len(thread_timestamps)} new unique threads")
+        print(f"Found {len(thread_timestamps)} unique threads")
 
-        if not thread_timestamps:
+        # Step 2: Get existing thread IDs from database for this user
+        existing_threads = Thread.query.filter_by(user_id=user_id).with_entities(Thread.gmail_thread_id).all()
+        existing_thread_ids = set(thread.gmail_thread_id for thread in existing_threads)
+        print(f"User has {len(existing_thread_ids)} existing threads in database")
+
+        # Step 3: Filter out threads that already exist
+        new_threads = {
+            thread_id: data
+            for thread_id, data in thread_timestamps.items()
+            if thread_id not in existing_thread_ids
+        }
+        print(f"Found {len(new_threads)} new threads not in database")
+
+        if not new_threads:
             imap.logout()
             print("No new threads to fetch")
             return stats
 
-        # Step 2: Sort by timestamp (newest first) and take last X
-        sorted_new_threads = sorted(thread_timestamps.items(), key=lambda x: x[1][1], reverse=True)
+        # Step 4: Sort by timestamp (newest first) and take last X
+        sorted_new_threads = sorted(new_threads.items(), key=lambda x: x[1][1], reverse=True)
         threads_to_fetch = sorted_new_threads[:count]
         print(f"Fetching {len(threads_to_fetch)} newest threads...")
 
@@ -546,6 +544,7 @@ def fetch_new_threads(user_id, user_email, access_token, count=5):
                 for mail_id in thread_email_ids:
                     try:
                         # Fetch full email with metadata
+                        # We still fetch RFC822 here because these are entirely NEW threads
                         result, msg_data = imap.fetch(mail_id, "(RFC822 X-GM-THRID X-GM-MSGID)")
                         if result != "OK" or not msg_data or not msg_data[0]:
                             continue
@@ -621,7 +620,8 @@ def fetch_new_threads(user_id, user_email, access_token, count=5):
 
 def sync_existing_threads(user_id, user_email, access_token):
     """
-    Sync existing threads with new emails from Gmail using subject-based search.
+    Sync existing threads with new emails from Gmail.
+    This function has been optimized to only fetch message IDs/metadata initially.
     Returns: dict with stats
     """
     stats = {
@@ -633,129 +633,129 @@ def sync_existing_threads(user_id, user_email, access_token):
 
     try:
         imap = imaplib.IMAP4_SSL("imap.gmail.com", port=993)
-        auth_string = f"user={user_email}\1auth=Bearer {access_token}\1\1"
-        imap.authenticate("XOAUTH2", lambda x: auth_string.encode("utf-8"))
+        auth_string = generate_oauth2_string(user_email, access_token)
+        imap.authenticate("XOAUTH2", lambda x: auth_string)
         imap.select("INBOX")
 
-        # Get all existing threads from database for this user
         existing_threads = Thread.query.filter_by(user_id=user_id).all()
-
-        if not existing_threads:
+        existing_thread_ids = [t.gmail_thread_id for t in existing_threads if t.gmail_thread_id]
+        
+        if not existing_thread_ids:
             imap.logout()
-            print("No existing threads to sync")
             return stats
 
         print(f"Syncing {len(existing_threads)} existing threads...")
+        
+        # Step 1: Search all messages for ALL known thread IDs in one optimized search
+        # We need a list of ALL message IDs associated with our existing threads
+        
+        # Build query for all known Gmail thread IDs
+        thread_id_query = ' '.join([f'X-GM-THRID {tid}' for tid in existing_thread_ids])
+        
+        # Fetch ALL message IDs (UIDs are best, but using IDs for compatibility)
+        # We fetch the UID as well, which is necessary for efficient syncing
+        result, data = imap.search(None, f'X-GM-RAW "{thread_id_query}"')
+        
+        if result != "OK" or not data[0]:
+             imap.logout()
+             return stats
+             
+        all_thread_mail_ids = data[0].split()
 
-        for thread in existing_threads:
-            try:
-                # Skip threads without Gmail thread ID
-                if not thread.gmail_thread_id:
-                    print(f"Skipping thread without Gmail ID: {thread.subject}")
-                    continue
+        # Step 2: Fetch metadata for all found message IDs
+        # Optimized fetch to only pull message/thread IDs and date/flags
+        # This is where the main speedup occurs—we don't pull bodies yet.
+        result, msg_data_list = imap.fetch(' '.join(all_thread_mail_ids), 
+                                           "(UID X-GM-THRID X-GM-MSGID FLAGS INTERNALDATE)")
 
-                # Normalize subject for search
-                normalized_subject = re.sub(r'^(Re:|Fwd:)\s*', '', thread.subject, flags=re.IGNORECASE).strip()
+        if result != "OK":
+            stats['errors'].append(f"Error fetching message metadata: {result}")
+            imap.logout()
+            return stats
 
-                print(f"Searching for thread (Gmail ID: {thread.gmail_thread_id[:16]}...) by subject: '{normalized_subject}'")
+        # Step 3: Identify messages that are NEW or MISSING from local DB
+        # Gather all existing Gmail message IDs from the local database
+        existing_gmail_msg_ids = set(
+            db.session.query(Message.gmail_message_id)
+            .filter(Message.user_id == user_id)
+            .all()
+        )
+        existing_gmail_msg_ids = set(g[0] for g in existing_gmail_msg_ids)
+        
+        messages_to_fetch_full_content = [] # Stores: (mail_id, gmail_message_id)
 
-                # Search by subject
-                result, data = imap.search(None, f'SUBJECT "{normalized_subject}"')
+        for item in msg_data_list:
+            if isinstance(item, tuple) and len(item) >= 2:
+                metadata = item[0].decode() if isinstance(item[0], bytes) else str(item[0])
+                
+                # Extract necessary IDs
+                msg_id_match = re.search(r'X-GM-MSGID (\d+)', metadata)
+                mail_id_match = re.search(r'^(\d+)', metadata) # Assuming the first number is the sequence ID
+                
+                if msg_id_match and mail_id_match:
+                    gmail_message_id = msg_id_match.group(1)
+                    mail_id = mail_id_match.group(1)
 
-                if result != "OK" or not data[0]:
-                    print(f"  No results found")
-                    continue
+                    if gmail_message_id not in existing_gmail_msg_ids:
+                        messages_to_fetch_full_content.append((mail_id, gmail_message_id))
+                        # Note: We don't add to the existing_threads list yet, wait until after content fetch
 
-                ids = data[0].split()
-                print(f"  Search found {len(ids)} emails")
+        print(f"Found {len(messages_to_fetch_full_content)} new messages missing from DB.")
 
-                # Fetch all emails for this thread
-                messages = []
-                for mail_id in ids:
-                    try:
-                        # Fetch both email content, Gmail thread ID, and Gmail message ID
-                        result, msg_data = imap.fetch(mail_id, "(RFC822 X-GM-THRID X-GM-MSGID)")
-                        if result != "OK" or not msg_data or not msg_data[0]:
-                            continue
+        # Step 4: Fetch full content (RFC822) only for the NEW messages
+        if messages_to_fetch_full_content:
+            mail_ids_to_fetch = ' '.join([m[0] for m in messages_to_fetch_full_content])
+            
+            result, full_msg_data = imap.fetch(mail_ids_to_fetch, "(RFC822 X-GM-THRID X-GM-MSGID FLAGS)")
+            
+            if result == "OK":
+                messages_by_thread = {} # {gmail_thread_id: [messages]}
+                
+                for item in full_msg_data:
+                    if isinstance(item, tuple) and len(item) >= 2:
+                        metadata = item[0].decode() if isinstance(item[0], bytes) else str(item[0])
+                        raw_msg = item[1]
 
-                        # Extract Gmail thread ID and message ID from IMAP response
-                        gmail_thread_id = None
-                        gmail_message_id = None
-                        raw = None
-                        for item in msg_data:
-                            if isinstance(item, tuple) and len(item) >= 2:
-                                # First item is the metadata string, second is the message
-                                metadata = item[0].decode() if isinstance(item[0], bytes) else str(item[0])
-                                if 'X-GM-THRID' in metadata:
-                                    match = re.search(r'X-GM-THRID (\d+)', metadata)
-                                    if match:
-                                        gmail_thread_id = match.group(1)
-                                if 'X-GM-MSGID' in metadata:
-                                    match = re.search(r'X-GM-MSGID (\d+)', metadata)
-                                    if match:
-                                        gmail_message_id = match.group(1)
-                                raw = item[1]
-                                break
+                        # Extract IDs and raw message content
+                        msg_id_match = re.search(r'X-GM-MSGID (\d+)', metadata)
+                        thread_id_match = re.search(r'X-GM-THRID (\d+)', metadata)
+                        
+                        if msg_id_match and thread_id_match and raw_msg:
+                            gmail_message_id = msg_id_match.group(1)
+                            gmail_thread_id = thread_id_match.group(1)
+                            
+                            msg = email.message_from_bytes(raw_msg)
+                            
+                            email_data = {
+                                'msg': msg,
+                                'gmail_thread_id': gmail_thread_id,
+                                'gmail_message_id': gmail_message_id
+                            }
+                            
+                            if gmail_thread_id not in messages_by_thread:
+                                messages_by_thread[gmail_thread_id] = []
+                            messages_by_thread[gmail_thread_id].append(email_data)
 
-                        if not raw:
-                            continue
-
-                        msg = email.message_from_bytes(raw)
-
-                        # Store message with its Gmail thread ID and message ID
-                        messages.append({
-                            'msg': msg,
-                            'gmail_thread_id': gmail_thread_id,
-                            'gmail_message_id': gmail_message_id
-                        })
-
-                    except Exception as e:
-                        print(f"    Error fetching message: {e}")
-                        continue
-
-                if messages:
-                    # Filter messages to only include those from this Gmail thread
-                    print(f"  Thread has Gmail ID: {thread.gmail_thread_id}")
-                    filtered_messages = []
-                    for email_data in messages:
-                        gmail_tid = email_data.get('gmail_thread_id')
-                        if gmail_tid == thread.gmail_thread_id:
-                            filtered_messages.append(email_data)
-                            print(f"    ✓ MATCH (Gmail TID: {gmail_tid})")
-
-                    print(f"  After Gmail ID filtering: {len(filtered_messages)} messages matched")
-
-                    if not filtered_messages:
-                        print(f"  No messages match this Gmail thread ID - skipping")
-                        continue
-
-                    # Sort by date
-                    def get_msg_date(email_data):
-                        try:
-                            msg = email_data['msg'] if isinstance(email_data, dict) else email_data
-                            date = msg.get("Date")
-                            if date:
-                                return parsedate_to_datetime(date)
-                        except:
-                            pass
-                        return None
-
-                    filtered_messages.sort(key=get_msg_date)
-
-                    # Update thread
-                    new_msg_count, moves_count = _update_thread_messages(thread, filtered_messages, access_token)
-
-                    if new_msg_count > 0:
-                        stats['threads_updated'] += 1
-                        stats['messages_added'] += new_msg_count
-                        stats['moves_parsed'] += moves_count
-                        print(f"Updated thread '{normalized_subject}': +{new_msg_count} messages, {moves_count} moves")
-
-            except Exception as e:
-                error_msg = f"Error syncing thread {thread.subject}: {str(e)}"
-                print(error_msg)
-                stats['errors'].append(error_msg)
-                continue
+                # Step 5: Update local threads with new messages
+                for thread in existing_threads:
+                    if thread.gmail_thread_id in messages_by_thread:
+                        new_messages_list = messages_by_thread[thread.gmail_thread_id]
+                        
+                        # Sort by date before updating
+                        def get_msg_date(email_data):
+                            try:
+                                date = email_data['msg'].get("Date")
+                                if date: return parsedate_to_datetime(date)
+                            except: return None
+                        
+                        new_messages_list.sort(key=get_msg_date)
+                        
+                        new_msg_count, moves_count = _update_thread_messages(thread, new_messages_list, access_token)
+                        
+                        if new_msg_count > 0:
+                            stats['threads_updated'] += 1
+                            stats['messages_added'] += new_msg_count
+                            stats['moves_parsed'] += moves_count
 
         imap.logout()
         print(f"Sync completed: {stats}")
@@ -801,9 +801,12 @@ def _update_thread_messages(thread, messages, access_token=None):
         ).first()
 
         if existing_msg:
+            # If the wheel of fortune deleted it locally, this message will now be skipped.
+            # However, if the thread_id check is removed here, the message would be added back.
+            # Since the logic assumes the incoming messages are NEW, we skip existing ones.
             print(f"        → Already exists in thread {thread.id} (skipping)")
             continue
-
+            
         print(f"        → NEW message, adding to thread {thread.id}")
 
         body, is_html = get_body_from_msg(msg)
@@ -834,12 +837,9 @@ def _update_thread_messages(thread, messages, access_token=None):
         # Fetch labels from Gmail API if access_token is provided
         label_list = []
         if access_token and gmail_message_id:
-            try:
-                from utils.gmail_api import get_message_labels
-                label_list = get_message_labels(access_token, gmail_message_id)
-                print(f"        → Labels: {label_list}")
-            except:
-                pass
+            from utils.gmail_api import get_message_labels
+            label_list = get_message_labels(access_token, gmail_message_id)
+            print(f"        → Labels: {label_list}")
 
         # Add new message
         new_message = Message(
@@ -860,6 +860,7 @@ def _update_thread_messages(thread, messages, access_token=None):
 
         # Update thread snippet with latest message
         if body:
+            import re
             if is_html:
                 # Remove HTML tags
                 snippet_text = re.sub(r'<[^>]+>', '', body)

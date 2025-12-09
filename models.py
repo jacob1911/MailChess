@@ -11,6 +11,7 @@ class User(db.Model):
     name = db.Column(db.String(120))
     picture = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    last_sync = db.Column(db.DateTime, nullable=True)  # Track last email sync time
 
     threads = db.relationship('Thread', backref='user', lazy=True)
     messages = db.relationship('Message', backref='user', lazy=True)

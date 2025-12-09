@@ -69,7 +69,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
                 <i class="fas fa-inbox text-indigo-500 mr-2"></i>
-                Top Afsender
+                Flest modtagede mails fra:
             </h3>
             <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 w-12 h-12 rounded-full flex items-center justify-center mr-4 text-xl font-bold">
@@ -89,7 +89,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
                 <i class="fas fa-paper-plane text-green-500 mr-2"></i>
-                Top Modtager
+                Flest mails sendt til: 
             </h3>
             <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div class="bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-200 w-12 h-12 rounded-full flex items-center justify-center mr-4 text-xl font-bold">
@@ -108,10 +108,11 @@
     </div>
 
     <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center">
-        <i class="fas fa-brain text-purple-600 mr-3"></i> Sprog Analyse (Dine E-mails)
+        <i class="fas fa-brain text-purple-600 mr-3"></i> Sprog Analyse (Alle E-mails)
     </h2>
+    <p class="text-gray-600 dark:text-gray-300 mb-4">Analyserer {{ total_analyzed }} beskeder i alt</p>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Mest Brugte Ord</h3>
@@ -148,6 +149,64 @@
             <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Ord fra din overvågningsliste</p>
             <div class="space-y-3">
                 {% for word, count in top_bad_words %}
+                <div class="flex justify-between items-center bg-red-50 dark:bg-red-900 p-2 rounded">
+                    <span class="text-red-700 dark:text-red-100 font-medium capitalize">{{ word }}</span>
+                    <span class="bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 px-2 py-1 rounded text-xs font-bold">{{ count }}</span>
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-check-circle text-green-500 text-4xl mb-2"></i>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mt-2">Ingen fundet!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Separate section for SENT emails only -->
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6 mt-10 flex items-center">
+        <i class="fas fa-user-edit text-indigo-600 mr-3"></i> Sprog Analyse (Kun Dine Sendte E-mails)
+    </h2>
+    <p class="text-gray-600 dark:text-gray-300 mb-4">Analyserer {{ sent_count }} beskeder sendt af dig</p>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Mest Brugte Ord</h3>
+            <div class="space-y-3">
+                {% for word, count in sent_top_words %}
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700 dark:text-gray-300 font-medium capitalize">{{ word }}</span>
+                    <span class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 px-2 py-1 rounded text-xs font-bold">{{ count }}</span>
+                </div>
+                {% else %}
+                <p class="text-gray-500 dark:text-gray-400 text-sm italic text-center py-4">Ingen data endnu</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Mest Brugte Start</h3>
+            <div class="space-y-3">
+                {% for starter, count in sent_top_starters %}
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700 dark:text-gray-300 font-medium italic">"{{ starter }}..."</span>
+                    <span class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 px-2 py-1 rounded text-xs font-bold">{{ count }}</span>
+                </div>
+                {% else %}
+                <p class="text-gray-500 dark:text-gray-400 text-sm italic text-center py-4">Ingen data endnu</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border-t-4 border-red-500">
+            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2 flex items-center">
+                <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Sprogbrug
+            </h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Ord fra din overvågningsliste</p>
+            <div class="space-y-3">
+                {% for word, count in sent_top_bad_words %}
                 <div class="flex justify-between items-center bg-red-50 dark:bg-red-900 p-2 rounded">
                     <span class="text-red-700 dark:text-red-100 font-medium capitalize">{{ word }}</span>
                     <span class="bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 px-2 py-1 rounded text-xs font-bold">{{ count }}</span>
