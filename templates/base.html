@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ session.get('lang', 'da') }}" class="light">
+<html lang="da" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -54,28 +54,17 @@
             <ul class="flex gap-6">
                 <li>
                     <a href="{{ url_for('mail.inbox') }}" class="text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold flex items-center">
-                        <i class="fas fa-home mr-2"></i> {{ _('Indbakke') }}
+                        <i class="fas fa-home mr-2"></i> Indbakke
                     </a>
                 </li>
                 <li>
                     <a href="{{ url_for('stats.index') }}" class="text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold flex items-center">
-                        <i class="fas fa-chart-pie mr-2"></i> {{ _('Statistik') }}
+                        <i class="fas fa-chart-pie mr-2"></i> Statistik
                     </a>
                 </li>
             </ul>
 
             <div class="flex items-center space-x-3">
-                <!-- FIX: Call JavaScript function to use AJAX API endpoint -->
-                <a href="#" onclick="setLanguage('da'); return false;"
-                   class="text-sm font-semibold p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-150" 
-                   title="{{ _('Skift til dansk') }}">
-                    🇩🇰
-                </a>
-                <a href="#" onclick="setLanguage('en'); return false;"
-                   class="text-sm font-semibold p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-150"
-                   title="{{ _('Skift til engelsk') }}">
-                    🇺🇸
-                </a>
                 <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-yellow-300 transition-colors shadow-sm">
                     <i id="navThemeIcon" class="fas fa-moon"></i>
                 </button>
@@ -86,36 +75,7 @@
     {% block content %}{% endblock %}
 
     <script>
-        // --- LANGUAGE SWITCH FIX (AJAX API CALL + RELOAD) ---
-        async function setLanguage(lang_code) {
-             try {
-                // 1. Call the new Flask API endpoint to update the session variable
-                const response = await fetch(`http://127.0.0.1:5000/api/set_language/${lang_code}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-
-                if (data.success) {
-                    // 2. FORCE a full page reload to fetch the new translations
-                    // Adding true forces the browser to bypass its cache and request fresh content
-                    window.location.reload(true); 
-                } else {
-                    console.error("Failed to set language:", data.error);
-                }
-
-             } catch (error) {
-                 console.error("Network error during language change:", error);
-                 // Fallback to absolute navigation as a last resort
-                 window.location.href = `http://127.0.0.1:5000/set_language/${lang_code}`;
-             }
-        }
-        // ----------------------------------------------------
-
-        // --- DARK MODE LOGIC (As previously confirmed) ---
+        // --- DARK MODE LOGIC ---
 
         // Function to update the icon based on the current theme
         function updateThemeIcon() {

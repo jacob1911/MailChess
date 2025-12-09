@@ -1,23 +1,15 @@
 import os
-import secrets # REQUIRED for generating unique FLASK_SECRET_KEY
-from flask import Flask, render_template, session, redirect, url_for, request, jsonify # <-- ADDED jsonify
+from flask import Flask, render_template, session, redirect, url_for, request, jsonify
 from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from datetime import timedelta
-from flask_babel import Babel, gettext as _
-
-# --- HARDCODED PUBLIC KEYS (ZERO-SETUP IMPLEMENTATION) ---
-# These are the actual keys extracted from environ.env, now embedded for public distribution.
-MAILCHESS_GOOGLE_CLIENT_ID = "302768656386-oq61tfoje3s0u3o0ss2qhuj0cfrivq46.apps.googleusercontent.com"
-MAILCHESS_GOOGLE_CLIENT_SECRET = "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" 
-# ---------------------------------------------------------
 
 
-# Load environment variables FIRST. This is now PRIMARILY to load the optional OPENAI_API_KEY.
+# Load environment variables FIRST
 load_dotenv('environ.env', override=True)
 
 print("---------------------------------------------------")
-print(f"DEBUG: Loaded Client ID: {MAILCHESS_GOOGLE_CLIENT_ID}") 
+print(f"DEBUG: Loaded Client ID: {os.environ.get('GOOGLE_CLIENT_ID')}")
 print("---------------------------------------------------")
 # ---------------------------
 
@@ -33,48 +25,16 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "instance", "mailchess.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# --- CRITICAL FIX FOR ABSOLUTE URLS (REQUIRED FOR _external=True) ---
-# Tells Flask its public face is the local host/port, ensuring URL generation works correctly.
-app.config['SERVER_NAME'] = '127.0.0.1:5000'
-# ------------------------------------------------------------------
-
-# --- FLASK SECRET KEY GENERATION (ZERO-SETUP IMPLEMENTATION) ---
-# 1. Check if FLASK_SECRET_KEY is provided in the environment (e.g., via environ.env)
-provided_secret = os.environ.get("FLASK_SECRET_KEY")
-
-if provided_secret is None:
-    # 2. If missing, generate a new, secure key at runtime for this instance/session
-    app.config['SECRET_KEY'] = secrets.token_hex(32)
-else:
-    # 3. If present, use the one from the environment (for developers/testing)
-    app.config['SECRET_KEY'] = provided_secret
-
-# Set the application's secret key
-app.secret_key = app.config['SECRET_KEY']
-# ----------------------------------------------------
+# Keys revert to environment variables (Developer must create environ.env)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret")
+# Removed: app.config['SERVER_NAME'] = '127.0.0.1:5000'
 
 # This keeps the login cookie valid for 31 days if requested
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=31)
 # --------------------------------------
 
-# --- BABEL/LOCALIZATION CONFIGURATION ---
-app.config['BABEL_DEFAULT_LOCALE'] = 'da'
-app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
-babel = Babel(app)
-
-def get_locale():
-    # 1. Check if language is explicitly set in session (via switch)
-    if 'lang' in session:
-        return session['lang']
-    # 2. Check the language accepted by the browser
-    return request.accept_languages.best_match(['da', 'en'])
-
-babel.locale_selector = get_locale
-
-@app.context_processor
-def inject_gettext():
-    # Make _() available directly in templates without passing it
-    return dict(_=_)
+# --- BABEL/LOCALIZATION CONFIGURATION --- (REMOVED ENTIRELY)
+# The application will now use the raw Danish strings from the templates.
 # ----------------------------------------
 
 # --- BLUEPRINT REGISTRATION ---
@@ -95,15 +55,13 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # Initialize database
 db.init_app(app)
 
-# --- REVERTED: Removed 'migrate = Migrate(app, db)' ---
-
 # Initialize OAuth
 oauth = OAuth(app)
 oauth.register(
     name="google",
-    # Use the hardcoded constants defined above (Zero-Setup Fix)
-    client_id=MAILCHESS_GOOGLE_CLIENT_ID,
-    client_secret=MAILCHESS_GOOGLE_CLIENT_SECRET,
+    # Keys revert to environment variables
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={
         "scope": "openid email profile https://mail.google.com/",
@@ -118,29 +76,20 @@ init_oauth(oauth)
 # Error handlers
 @app.errorhandler(404)
 def not_found_error(error):
-    return render_template('error.html', error_code=404, error_message=_("Siden blev ikke fundet")), 404 # <-- USED _()
+    return render_template('error.html', error_code=404, error_message="Siden blev ikke fundet"), 404
 
 @app.errorhandler(500)
 def internal_error(error):
     db.session.rollback()
-    return render_template('error.html', error_code=500, error_message=_("Der opstod en intern serverfejl")), 500 # <-- USED _()
+    return render_template('error.html', error_code=500, error_message="Der opstod en intern serverfejl"), 500
 
 @app.errorhandler(Exception)
 def handle_exception(error):
     db.session.rollback()
     app.logger.error(f"Unhandled exception: {error}")
-    return render_template('error.html', error_code=500, error_message=_("Der opstod en uventet fejl")), 500 # <-- USED _()
+    return render_template('error.html', error_code=500, error_message="Der opstod en uventet fejl"), 500
 
-
-# --- NEW: Language Switch API (FIXED FOR PYWEBVIEW) ---
-@app.route('/api/set_language/<lang_code>', methods=['POST'])
-def api_set_language(lang_code):
-    if lang_code in ['en', 'da']:
-        session['lang'] = lang_code
-        return jsonify(success=True, lang=lang_code)
-    return jsonify(success=False, error="Invalid language code"), 400
-# ------------------------------------------------------
-
+# --- REMOVED: Language Switch API /api/set_language/<lang_code> ---
 
 def init_db():
     """Initialize database tables"""

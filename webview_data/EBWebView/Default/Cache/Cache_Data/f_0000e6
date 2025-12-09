@@ -1,8 +1,42 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="da" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MailChess - Indbakke</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* This fixes the email display in Dark Mode */
+        .dark .email-content-inverter {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        .dark .email-content-inverter img {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        
+        /* Smooth transition for theme switching */
+        html, body { transition: background-color 0.3s, color 0.3s; }
 
-{% block title %}MailChess - Indbakke{% endblock %}
+        /* --- NEW WHEEL ANIMATION CSS --- */
+        @keyframes spin-wheel-keyframes {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(720deg); } /* Spins 2 full times */
+        }
 
-{% block extra_css %}
+        .wheel-spinning {
+            animation: spin-wheel-keyframes 2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; 
+        }
+        /* -------------------------------- */
+    </style>
+
+    
 <style>
     .label-badge {
         display: inline-flex;
@@ -19,9 +53,43 @@
     .label-important { background-color: #FEE2E2; color: #DC2626; }
     .label-inbox { background-color: #DCFCE7; color: #16A34A; }
 </style>
-{% endblock %}
 
-{% block content %}
+
+    <script>
+        // IMMEDIATE THEME CHECK: Runs before content loads
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen text-gray-800 dark:text-gray-100 flex flex-col">
+
+    <nav class="p-4 bg-white/90 shadow-sm dark:bg-gray-900/90 transition-colors duration-200">
+        <div class="container mx-auto flex justify-between items-center">
+            <ul class="flex gap-6">
+                <li>
+                    <a href="/inbox" class="text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold flex items-center">
+                        <i class="fas fa-home mr-2"></i> Indbakke
+                    </a>
+                </li>
+                <li>
+                    <a href="/mail_stats/" class="text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold flex items-center">
+                        <i class="fas fa-chart-pie mr-2"></i> Statistik
+                    </a>
+                </li>
+            </ul>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-yellow-300 transition-colors shadow-sm">
+                    <i id="navThemeIcon" class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    
 <div class="container mx-auto px-4 py-8">
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 transition-colors duration-200">
         <div class="flex items-center justify-between">
@@ -30,14 +98,14 @@
                     <i class="fas fa-chess-knight text-indigo-600 dark:text-indigo-400 mr-3"></i>
                     MailChess
                 </h1>
-                <p class="text-gray-600 dark:text-gray-300 mt-1">Velkommen, {{ user.name }}</p>
+                <p class="text-gray-600 dark:text-gray-300 mt-1">Velkommen, Magnus Jensen</p>
             </div>
             <div class="flex items-center space-x-3">
                 <button onclick="toggleNewThread()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center shadow-md">
                     <i class="fas fa-plus mr-2"></i> Ny tråd
                 </button>
                 
-                <a href="{{ url_for('stats.index') }}" class="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Statistik">
+                <a href="/mail_stats/" class="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Statistik">
                     <i class="fas fa-chart-pie"></i>
                 </a>
 
@@ -54,23 +122,16 @@
                     <i id="themeIcon" class="fas fa-moon"></i>
                 </button>
 
-                <a href="{{ url_for('auth.logout') }}" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Log ud">
+                <a href="/auth/logout" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Log ud">
                     <i class="fas fa-sign-out-alt"></i>
                 </a>
             </div>
         </div>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-            <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100{% elif category == 'success' %}bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100{% else %}bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100{% endif %}">
-                <i class="fas {% if category == 'error' %}fa-exclamation-circle{% elif category == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
-                {{ message }}
-            </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    
+        
+    
 
     <div id="newThreadForm" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 transition-colors duration-200">
         <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
@@ -158,97 +219,12 @@
         <div id="statusMessage" class="hidden mb-4 p-3 rounded-lg"></div>
 
         <div id="threadsList">
-            {% if threads %}
-            {% set custom_label_dict = {} %}
-            {% for cl in custom_labels %}{% set _ = custom_label_dict.update({cl.name: cl}) %}{% endfor %}
-            <div class="space-y-2">
-                {% for t in threads %}
-                
-                {# Pre-calculate labels for this thread #}
-                {% set all_labels = [] %}
-                {% for msg in t.messages %}
-                    {% if msg.label_ids %}
-                        {% for label in msg.label_ids.split(',') %}
-                            {% if label.strip() and label.strip() not in all_labels %}
-                                {% set _ = all_labels.append(label.strip()) %}
-                            {% endif %}
-                        {% endfor %}
-                    {% endif %}
-                {% endfor %}
-                
-                <div class="relative group thread-item" data-labels="{{ all_labels|join(',') }}">
-                    <a href="{{ url_for('mail.thread', thread_id=t.id) }}" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3 flex-1">
-                                <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center justify-between mb-1">
-                                        <div class="flex items-center space-x-2">
-                                            <p class="font-semibold text-gray-800 dark:text-gray-200">{{ t.subject }}</p>
-                                            <div class="flex space-x-1">
-                                                {% for label in all_labels %}
-                                                    {% if label in custom_label_dict %}
-                                                        {% set cl = custom_label_dict[label] %}
-                                                        <span class="label-badge" style="background-color: {{ cl.color }}22; color: {{ cl.color }}; border: 1px solid {{ cl.color }}">
-                                                            {% if cl.icon_path %}
-                                                                <img src="{{ cl.icon_path }}" alt="{{ cl.display_name }}" style="width: 12px; height: 12px;">
-                                                            {% else %}
-                                                                {{ cl.display_name }}
-                                                            {% endif %}
-                                                        </span>
-                                                    {% else %}
-                                                        {# FIXED: Use |lower filter instead of .lower() #}
-                                                        <span class="label-badge label-{{ label|lower }}">{{ label }}</span>
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                                        {# FIXED: Use simple if/else block and filters to avoid comma error #}
-                                        {% if t.other_person %}
-                                            <span class="font-medium text-gray-900 dark:text-gray-300">
-                                                {{ t.other_person.split('@')|first }}
-                                            </span> - 
-                                        {% endif %}
-                                        
-                                        {{ (t.snippet or 'Ingen beskeder endnu') | truncate(40) }}
-                                    </p>
-                                </div>
-                            </div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">
-                                {{ t.latest_message_date.strftime('%d/%m/%y %H:%M') if t.latest_message_date else '' }}
-                            </span>
-                        </div>
-                    </a>
-                    
-                    <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
-                        <button onclick="toggleLabel(event, {{ t.id }}, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Stjerne">
-                            <i class="fas fa-star text-yellow-500"></i>
-                        </button>
-                        <button onclick="toggleLabel(event, {{ t.id }}, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Vigtig">
-                            <i class="fas fa-exclamation text-red-500"></i>
-                        </button>
-                        <button onclick="markAsRead(event, {{ t.id }})" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
-                            <i class="fas fa-envelope-open text-blue-500"></i>
-                        </button>
-                        <div class="relative">
-                            <button onclick="toggleCustomLabelMenu(event, {{ t.id }})" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
-                                <i class="fas fa-tags text-purple-500"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
+            
             <div class="text-center py-12 text-gray-500 dark:text-gray-400">
                 <i class="fas fa-inbox text-6xl mb-4 opacity-50"></i>
                 <p>Ingen tråde endnu</p>
             </div>
-            {% endif %}
+            
         </div>
     </div>
 </div>
@@ -275,9 +251,47 @@
         </button>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+
+    <script>
+        // --- DARK MODE LOGIC ---
+
+        // Function to update the icon based on the current theme
+        function updateThemeIcon() {
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            // 1. Update the icon in the Navbar (navThemeIcon)
+            const navIcon = document.getElementById('navThemeIcon');
+            if (navIcon) {
+                navIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+
+            // 2. Update the icon in the Inbox Toolbar (themeIcon, if it exists)
+            const toolbarIcon = document.getElementById('themeIcon');
+            if (toolbarIcon) { 
+                toolbarIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+
+        // Function to toggle the theme
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            
+            if (isDark) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+
+            // Update the icon after the theme has been toggled
+            updateThemeIcon();
+        }
+
+        // Run on load
+        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+    </script>
+
+    
 <script>
     // Global variable to store the result from the server
     let wheelOutcome = null;
@@ -394,7 +408,7 @@
                 location.reload(); // Reload to update thread list
             } else if (data.require_reauth) {
                  alert('Authentication er påkrævet. Log venligst ud og ind igen.');
-                 location.href = '{{ url_for("auth.logout") }}';
+                 location.href = '/auth/logout';
             } else {
                 alert('Fejl under handling: ' + data.error);
             }
@@ -581,7 +595,7 @@
             element.innerHTML = `
                 <i class="fas fa-exclamation-triangle mr-2"></i>
                 <strong>Authentication fejl:</strong> ${data.error}<br>
-                <button onclick="window.location.href='{{ url_for("auth.logout") }}'"
+                <button onclick="window.location.href='/auth/logout'"
                         class="mt-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded">
                     <i class="fas fa-sign-out-alt mr-2"></i>Log ud og ind igen
                 </button>
@@ -880,4 +894,6 @@
         }
     }
 </script>
-{% endblock %}
+
+</body>
+</html>

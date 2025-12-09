@@ -33,7 +33,7 @@ WHEEL_RULES = [
 
 # Helper function for file uploads
 def allowed_file(filename):
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg'}
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'zip', 'pgn'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Register Jinja2 filter for cleaning message bodies
@@ -374,6 +374,18 @@ def thread(thread_id):
             flash("No recipient found for this thread", "error")
             return redirect(url_for("mail.thread", thread_id=thread_id))
 
+        # --- UPDATED: Handle Attachments ---
+        attachments = []
+        if 'attachments' in request.files:
+            files = request.files.getlist('attachments')
+            for file in files:
+                if file and file.filename:
+                    if allowed_file(file.filename):
+                        attachments.append(file)
+                    else:
+                        flash(f"Filtype ikke tilladt: {file.filename}", "warning")
+        # -----------------------------------
+
         new_fen, game_result, game_over, evaluation_score = process_move(fen, move_uci)
 
         update_thread_fen(thread.id, new_fen)
@@ -415,6 +427,7 @@ def thread(thread_id):
                 else:
                     email_body = body
 
+            # --- UPDATED: Pass attachments to API ---
             result = send_email_via_api(
                 session["access_token"],
                 user_email,
@@ -424,8 +437,10 @@ def thread(thread_id):
                 is_html=is_html,
                 in_reply_to=in_reply_to,
                 references=references,
-                thread_id=gmail_thread_id
+                thread_id=gmail_thread_id,
+                attachments=attachments  # <--- Attachment list passed here
             )
+            # ----------------------------------------
 
             if result and result.get('gmail_message_id'):
                 if thread.gmail_thread_id.startswith("temp_") and result.get('thread_id'):

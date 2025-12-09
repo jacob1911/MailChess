@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Login - MailChess') }}</title>
+    <title>Login - MailChess</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -13,7 +13,7 @@
             <div class="text-center mb-8">
                 <i class="fas fa-chess-knight text-6xl text-indigo-600 mb-4"></i>
                 <h1 class="text-3xl font-bold text-gray-800">MailChess</h1>
-                <p class="text-gray-600 mt-2">{{ _('Spil skak gennem Gmail') }}</p>
+                <p class="text-gray-600 mt-2">Spil skak gennem Gmail</p>
             </div>
 
             <form action="{{ url_for('auth.login_google') }}" method="GET" class="w-full">
@@ -22,7 +22,7 @@
                     <input id="remember_me" name="remember_me" type="checkbox" 
                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer">
                     <label for="remember_me" class="ml-2 block text-sm text-gray-700 cursor-pointer select-none">
-                        {{ _('Husk mig på denne computer') }}
+                        Husk mig på denne computer
                     </label>
                 </div>
 
@@ -34,7 +34,7 @@
                         <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
                         <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                     </svg>
-                    {{ _('Log ind med Google') }}
+                    Log ind med Google
                 </button>
             </form>
 
@@ -44,14 +44,14 @@
                         <i class="fas fa-exclamation-triangle text-yellow-400"></i>
                     </div>
                     <div class="ml-3">
-                        <h3 class="text-sm font-medium text-yellow-800">{{ _('Vigtig information') }}</h3>
+                        <h3 class="text-sm font-medium text-yellow-800">Vigtig information</h3>
                         <div class="mt-2 text-sm text-yellow-700">
-                            <p>{{ _('Når du logger ind, skal du give følgende tilladelser:') }}</p>
+                            <p>Når du logger ind, skal du give følgende tilladelser:</p>
                             <ul class="list-disc list-inside mt-2 space-y-1">
-                                <li>{{ _('Læse dine Gmail emails') }}</li>
-                                <li>{{ _('Sende emails på dine vegne') }}</li>
+                                <li>Læse dine Gmail emails</li>
+                                <li>Sende emails på dine vegne</li>
                             </ul>
-                            <p class="mt-2 font-semibold">{{ _('Uden disse tilladelser virker appen ikke.') }}</p>
+                            <p class="mt-2 font-semibold">Uden disse tilladelser virker appen ikke.</p>
                         </div>
                     </div>
                 </div>
@@ -61,29 +61,29 @@
                 <div class="flex items-start">
                     <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
                     <div>
-                        <h4 class="font-semibold text-gray-800">{{ _('Gmail Integration') }}</h4>
-                        <p class="text-sm text-gray-600">{{ _('Spil skak gennem dine normale Gmail emails') }}</p>
+                        <h4 class="font-semibold text-gray-800">Gmail Integration</h4>
+                        <p class="text-sm text-gray-600">Spil skak gennem dine normale Gmail emails</p>
                     </div>
                 </div>
                 <div class="flex items-start">
                     <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
                     <div>
-                        <h4 class="font-semibold text-gray-800">{{ _('Automatisk Synkronisering') }}</h4>
-                        <p class="text-sm text-gray-600">{{ _('Dine træk opdateres automatisk fra emails') }}</p>
+                        <h4 class="font-semibold text-gray-800">Automatisk Synkronisering</h4>
+                        <p class="text-sm text-gray-600">Dine træk opdateres automatisk fra emails</p>
                     </div>
                 </div>
                 <div class="flex items-start">
                     <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
                     <div>
-                        <h4 class="font-semibold text-gray-800">{{ _('Interaktivt Skakbræt') }}</h4>
-                        <p class="text-sm text-gray-600">{{ _('Lav træk direkte i browseren') }}</p>
+                        <h4 class="font-semibold text-gray-800">Interaktivt Skakbræt</h4>
+                        <p class="text-sm text-gray-600">Lav træk direkte i browseren</p>
                     </div>
                 </div>
             </div>
 
             <div class="mt-6 text-xs text-gray-500 text-center">
                 <i class="fas fa-lock mr-1"></i>
-                {{ _('Vi gemmer kun email metadata. Dine emails forbliver i din Gmail.') }}
+                Vi gemmer kun email metadata. Dine emails forbliver i din Gmail.
             </div>
         </div>
     </div>
