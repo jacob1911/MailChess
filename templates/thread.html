@@ -340,6 +340,9 @@
                     </div>
                 </div>
 
+                <!-- Uploads Section -->
+
+
                 <!-- Reply Button -->
                 <button id="replyBtn" onclick="toggleReply()"
                     class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition duration-200">
@@ -365,12 +368,8 @@
                             <label class="block text-gray-700 font-semibold mb-2">
                                 <i class="fas fa-paperclip mr-2"></i>Vedhæft filer (PDF, billeder)
                             </label>
-                            <input type="file"
-                                   name="attachments"
-                                   id="fileInput"
-                                   multiple
-                                   accept=".pdf,.png,.jpg,.jpeg,.gif,.svg,.doc,.docx,.xls,.xlsx,.txt,.zip,.pgn"
-                                   class="block w-full text-sm text-gray-500
+                            <input type="file" name="attachments" id="fileInput" multiple
+                                accept=".pdf,.png,.jpg,.jpeg,.gif,.svg,.doc,.docx,.xls,.xlsx,.txt,.zip,.pgn" class="block w-full text-sm text-gray-500
                                           file:mr-4 file:py-2 file:px-4
                                           file:rounded-full file:border-0
                                           file:text-sm file:font-semibold
@@ -396,6 +395,54 @@
                         </div>
                     </form>
                 </div>
+
+                <!-- Forward Form (Hidden Modal) -->
+                <div id="forwardModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+                    <div class="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-bold text-gray-800">
+                                <i class="fas fa-share mr-2"></i>Videresend besked
+                            </h3>
+                            <button onclick="closeForwardModal()" class="text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-times text-2xl"></i>
+                            </button>
+                        </div>
+                        <form id="forwardForm" class="space-y-4">
+                            <input type="hidden" id="forwardMessageId" />
+
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Modtager</label>
+                                <input type="email" id="forwardRecipient" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    placeholder="modtager@example.com">
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Emne</label>
+                                <input type="text" id="forwardSubject" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Besked (tilføj evt. kommentar)</label>
+                                <div id="forwardEditor" class="bg-white border border-gray-300 rounded-lg"></div>
+                                <input type="hidden" id="forwardIsHtml" />
+                            </div>
+
+                            <div class="flex space-x-3">
+                                <button type="submit"
+                                    class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition duration-200">
+                                    <i class="fas fa-paper-plane mr-2"></i>
+                                    Videresend
+                                </button>
+                                <button type="button" onclick="closeForwardModal()"
+                                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-6 py-2 rounded-lg transition duration-200">
+                                    Annuller
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
 
             <!-- Chess Board Section -->
@@ -416,7 +463,8 @@
                         <span>⚪ White</span>
                     </div>
                     <div>
-                        <input type="range" id="evalSlider" min="-1000" max="1000" step="10" value="{{ evaluation }}" disabled>
+                        <input type="range" id="evalSlider" min="-1000" max="1000" step="10" value="{{ evaluation }}"
+                            disabled>
                         <div id="evalValue">evaluation: {{ evaluation }}</div>
                     </div>
                 </div>
@@ -424,9 +472,71 @@
             <p>Stockscore = {{ evaluation }}</p>
 
         </div>
+
+        {% if thread.uploads %}
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex items-center justify-between">
+                
+                
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h1 class="text-2xl font-bold text-gray-800 flex items-center">Vedhæftede filer i denne tråd:</h1>
+                    <br>
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                        <i class="fas fa-paperclip mr-2"></i>
+                        Vedhæftede filer ({{ thread.uploads|length }})
+                    </h3>
+                    <div class="space-y-2">
+                        {% for upload in thread.uploads %}
+                        <div
+                            class="flex items-center justify-between p-2 bg-white rounded border border-gray-200 hover:border-indigo-300 transition">
+                            <div class="flex items-center space-x-3 flex-1 min-w-0">
+                                <!-- File icon based on type -->
+                                {% if upload.filename.lower().endswith('.pdf') %}
+                                <i class="fas fa-file-pdf text-red-600 text-xl"></i>
+                                {% elif upload.filename.lower().endswith(('.doc', '.docx')) %}
+                                <i class="fas fa-file-word text-blue-600 text-xl"></i>
+                                {% elif upload.filename.lower().endswith(('.xls', '.xlsx')) %}
+                                <i class="fas fa-file-excel text-green-600 text-xl"></i>
+                                {% elif upload.filename.lower().endswith('.txt') %}
+                                <i class="fas fa-file-alt text-gray-600 text-xl"></i>
+                                {% elif upload.filename.lower().endswith('.zip') %}
+                                <i class="fas fa-file-archive text-yellow-600 text-xl"></i>
+                                {% elif upload.filename.lower().endswith('.pgn') %}
+                                <i class="fas fa-chess-board text-purple-600 text-xl"></i>
+                                {% elif upload.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg')) %}
+                                <i class="fas fa-file-image text-pink-600 text-xl"></i>
+                                {% else %}
+                                <i class="fas fa-file text-gray-600 text-xl"></i>
+                                {% endif %}
+
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-800 truncate">{{ upload.filename }}</p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ (upload.file_size / 1024)|round(1) }} KB
+                                        • {{ upload.uploaded_at.strftime('%d/%m/%Y %H:%M') }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <a href="{{ url_for('mail.download_file', upload_id=upload.id) }}"
+                                class="ml-3 flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition duration-200">
+                                <i class="fas fa-download"></i>
+                                <span>Download</span>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- Sync Status -->
+            <div id="threadSyncStatus" class="hidden mt-4 p-3 rounded-lg"></div>
+        </div>
+        {% endif %}
     </div>
 
-   
+
 
     <script>
         let game = new Chess("{{ fen }}");
@@ -498,7 +608,7 @@
         }
 
         // Display selected files
-        document.getElementById('fileInput').addEventListener('change', function(e) {
+        document.getElementById('fileInput').addEventListener('change', function (e) {
             const fileList = document.getElementById('fileList');
             const files = e.target.files;
 
@@ -715,12 +825,24 @@
                             }
 
                             html += `
-                                <div class="p-4 rounded-lg ${bgClass} break-words" style="max-width: 100%; overflow: hidden; word-wrap: break-word;">
+                                <div class="relative group p-4 rounded-lg ${bgClass} break-words" style="max-width: 100%; overflow: hidden; word-wrap: break-word;">
                                     <div class="flex items-start justify-between mb-2">
                                         <span class="font-semibold text-gray-800">
                                             <i class="fas fa-user-circle ${iconClass} mr-1"></i> ${senderName}
                                         </span>
-                                        <span class="text-xs text-gray-500">${timestamp}</span>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-xs text-gray-500">${timestamp}</span>
+                                            <button onclick="forwardMessage(${msg.id})"
+                                                    class="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-blue-100 rounded text-blue-600"
+                                                    title="Videresend besked">
+                                                <i class="fas fa-share text-sm"></i>
+                                            </button>
+                                            <button onclick="deleteMessage(${msg.id})"
+                                                    class="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 rounded text-red-600"
+                                                    title="Slet besked (kun lokal database)">
+                                                <i class="fas fa-trash text-sm"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     ${msg.move ? `
                                         <div class="mb-2">
@@ -750,6 +872,168 @@
                 console.error('Error updating thread messages:', error);
             }
         }
+
+        // Delete a message from local database
+        async function deleteMessage(messageId) {
+            if (!confirm('Er du sikker på at du vil slette denne besked fra den lokale database?\n\nBeskeden vil stadig være i Gmail.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/message/${messageId}/delete`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Refresh messages list
+                    await updateThreadMessages();
+                } else {
+                    alert('Fejl ved sletning: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error deleting message:', error);
+                alert('Netværksfejl: ' + error.message);
+            }
+        }
+
+        // Forward editor instance
+        let forwardQuill = null;
+
+        // Initialize forward Quill editor
+        function initForwardEditor() {
+            if (!forwardQuill) {
+                forwardQuill = new Quill('#forwardEditor', {
+                    theme: 'snow',
+                    placeholder: 'Skriv en kommentar her (valgfrit)...',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline'],
+                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                            ['link']
+                        ]
+                    }
+                });
+            }
+        }
+
+        // Open forward modal with message data
+        async function forwardMessage(messageId) {
+            try {
+                console.log('[DEBUG] Forward clicked for message:', messageId);
+
+                // Fetch message data from API
+                const response = await fetch(`/api/thread/${threadId}/messages`);
+                console.log('[DEBUG] API response status:', response.status);
+
+                const data = await response.json();
+                console.log('[DEBUG] API data:', data);
+
+                if (!data.success) {
+                    console.error('[ERROR] API returned success=false');
+                    alert('Kunne ikke hente besked data: ' + (data.error || 'Ukendt fejl'));
+                    return;
+                }
+
+                console.log('[DEBUG] Looking for message ID:', messageId, 'in', data.messages.length, 'messages');
+
+                // Find the specific message
+                const message = data.messages.find(m => m.id === messageId);
+                if (!message) {
+                    console.error('[ERROR] Message not found. Available IDs:', data.messages.map(m => m.id));
+                    alert('Besked ikke fundet. Message ID: ' + messageId);
+                    return;
+                }
+
+                console.log('[DEBUG] Found message:', message);
+
+                // Initialize editor if not already done
+                initForwardEditor();
+
+                // Show modal
+                document.getElementById('forwardModal').classList.remove('hidden');
+
+                // Set message ID
+                document.getElementById('forwardMessageId').value = messageId;
+
+                // Set subject with "Fwd: " prefix (with safety check)
+                const subject = message.subject || 'Ingen emne';
+                const fwdSubject = subject.startsWith('Fwd:') ? subject : `Fwd: ${subject}`;
+                document.getElementById('forwardSubject').value = fwdSubject;
+
+                // Set HTML flag
+                document.getElementById('forwardIsHtml').value = message.is_html || false;
+
+                // Prepare forwarded message content
+                let forwardedContent = '<br><br>---------- Videresendt besked ----------<br>';
+                forwardedContent += (message.body || '');
+
+                // Set content in editor
+                forwardQuill.root.innerHTML = forwardedContent;
+
+                console.log('[DEBUG] Forward modal opened successfully');
+            } catch (error) {
+                console.error('[ERROR] Error loading message for forward:', error);
+                alert('Fejl ved indlæsning af besked: ' + error.message);
+            }
+        }
+
+        // Close forward modal
+        function closeForwardModal() {
+            document.getElementById('forwardModal').classList.add('hidden');
+            document.getElementById('forwardForm').reset();
+            if (forwardQuill) {
+                forwardQuill.setText('');
+            }
+        }
+
+        // Handle forward form submission
+        document.getElementById('forwardForm')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const messageId = document.getElementById('forwardMessageId').value;
+            const recipient = document.getElementById('forwardRecipient').value;
+            const subject = document.getElementById('forwardSubject').value;
+            const isHtml = document.getElementById('forwardIsHtml').value === 'true';
+
+            // Get content from Quill
+            const body = forwardQuill.root.innerHTML;
+
+            try {
+                const response = await fetch('/api/forward-message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message_id: messageId,  // Include message_id to get attachments
+                        recipient: recipient,
+                        subject: subject,
+                        body: body,
+                        is_html: true  // Always send as HTML since we're using Quill
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const msg = data.attachments_count > 0
+                        ? `Besked videresendt med ${data.attachments_count} vedhæftning(er)!`
+                        : 'Besked videresendt!';
+                    alert(msg);
+                    closeForwardModal();
+                } else {
+                    alert('Fejl ved videresendelse: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error forwarding message:', error);
+                alert('Netværksfejl: ' + error.message);
+            }
+        });
 
         // Make board responsive
         window.addEventListener('resize', function () {

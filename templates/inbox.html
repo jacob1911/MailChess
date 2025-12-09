@@ -8,6 +8,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Preloader overlay */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+
+        #preloader.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
         .label-badge {
             display: inline-flex;
             align-items: center;
@@ -322,6 +342,10 @@
                                     <i class="fas fa-tags text-purple-500"></i>
                                 </button>
                             </div>
+                            <button onclick="deleteThread(event, {{ t.id }})"
+                                class="p-2 hover:bg-red-50 rounded transition duration-200" title="Slet tråd (kun lokal database)">
+                                <i class="fas fa-trash text-red-600"></i>
+                            </button>
                         </div>
                     </div>
                     {% endfor %}
@@ -341,11 +365,14 @@
         window.addEventListener("load", () => {
             setTimeout(() => {
                 // Fade out preloader
-                document.getElementById("preloader").classList.add("hidden");
+                const preloader = document.getElementById("preloader");
+                preloader.classList.add("fade-out");
 
-                // Fade in content
-                document.getElementById("content").classList.add("visible");
-            }, 2000); // play animation for 2 seconds
+                // Remove from DOM after fade completes
+                setTimeout(() => {
+                    preloader.remove();
+                }, 500); // Wait for fade-out animation
+            }, 1500); // Show animation for 1 second
         });
 
         // Store custom labels globally
@@ -772,6 +799,11 @@
                                             <i class="fas fa-tags text-purple-500"></i>
                                         </button>
                                     </div>
+                                    <button onclick="deleteThread(event, ${thread.id})"
+                                            class="p-2 hover:bg-red-50 rounded transition duration-200"
+                                            title="Slet tråd (kun lokal database)">
+                                        <i class="fas fa-trash text-red-600"></i>
+                                    </button>
                                 </div>
                             </div>
                         `;
@@ -985,6 +1017,43 @@
                 }
             } catch (error) {
                 console.error('Error marking as read:', error);
+                alert('Netværksfejl: ' + error.message);
+            }
+        }
+
+        // Delete thread from local database
+        async function deleteThread(event, threadId) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (!confirm('Er du sikker på at du vil slette denne tråd fra den lokale database?\n\nAlle beskeder og uploads i tråden vil blive slettet.\nTråden vil stadig være i Gmail.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/thread/${threadId}/delete`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show success message with stats
+                    if (data.stats) {
+                        const statsMsg = `Tråd slettet!\n\nBeskeder: ${data.stats.messages_deleted}\nUploads: ${data.stats.uploads_deleted}`;
+                        alert(statsMsg);
+                    }
+
+                    // Refresh thread list
+                    await updateThreadList();
+                } else {
+                    alert('Fejl ved sletning: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error deleting thread:', error);
                 alert('Netværksfejl: ' + error.message);
             }
         }

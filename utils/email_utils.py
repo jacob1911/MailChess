@@ -4,12 +4,15 @@ import email
 import base64
 import re
 import chess
+import os
+import mimetypes
 from email.mime.text import MIMEText
 from email.utils import formataddr, parsedate_to_datetime, parseaddr
-from models import db, Thread, Message, User
+from models import db, Thread, Message, User, Upload
 from html import escape
 import html.parser
 from datetime import datetime, timezone
+from werkzeug.utils import secure_filename
 
 
 def extract_email_address(email_header):
@@ -202,6 +205,47 @@ def get_body_from_msg(msg):
         return plain_body, False
     else:
         return "", False
+
+
+def extract_attachments_from_msg(msg):
+    """
+    Extract attachment information from email message.
+
+    Returns:
+        List of dicts with attachment info:
+        [{'filename': str, 'data': bytes, 'mime_type': str, 'size': int}, ...]
+    """
+    attachments = []
+
+    if not msg.is_multipart():
+        return attachments
+
+    for part in msg.walk():
+        content_type = part.get_content_type()
+        content_dispo = str(part.get("Content-Disposition", ""))
+
+        # Only process actual attachments (not inline images or text parts)
+        if "attachment" in content_dispo:
+            filename = part.get_filename()
+
+            if filename:
+                try:
+                    # Get the payload (file data)
+                    file_data = part.get_payload(decode=True)
+
+                    if file_data:
+                        attachments.append({
+                            'filename': filename,
+                            'data': file_data,
+                            'mime_type': content_type,
+                            'size': len(file_data)
+                        })
+                        print(f"[SYNC] Found attachment: {filename} ({len(file_data)} bytes)")
+                except Exception as e:
+                    print(f"[SYNC] Error extracting attachment {filename}: {str(e)}")
+                    continue
+
+    return attachments
 
 
 def extract_chess_move(body):
@@ -432,9 +476,17 @@ def caesar_decrypt(text, shift=3):
     return caesar_encrypt(text, -shift)
 
 
-def fetch_new_threads(user_id, user_email, access_token, count=5):
+def fetch_new_threads(user_id, user_email, access_token, count=5, last_sync=None):
     """
     Fetch last X new email threads from Gmail that don't exist in local database
+
+    Args:
+        user_id: ID of the user
+        user_email: User's email address
+        access_token: OAuth access token
+        count: Number of new threads to fetch
+        last_sync: Optional datetime to only fetch emails since this date
+
     Returns: dict with stats
     """
     stats = {
@@ -449,8 +501,19 @@ def fetch_new_threads(user_id, user_email, access_token, count=5):
         imap.authenticate("XOAUTH2", lambda x: auth_string.encode("utf-8"))
         imap.select("INBOX")
 
-        # Get all email IDs
-        result, data = imap.search(None, 'X-GM-RAW "category:primary"')
+        # Build search query with optional date filter
+        search_query = 'X-GM-RAW "category:primary"'
+
+        if last_sync:
+            # Format date for IMAP SINCE (format: "1-Jan-2025")
+            since_date = last_sync.strftime("%d-%b-%Y")
+            search_query = f'SINCE {since_date} X-GM-RAW "category:primary"'
+            print(f"[SYNC] Fetching emails since {since_date}")
+        else:
+            print(f"[SYNC] Fetching all emails (no last_sync)")
+
+        # Get email IDs matching the search
+        result, data = imap.search(None, search_query)
         ids = data[0].split() if data[0] else []
 
         if not ids:
@@ -607,9 +670,16 @@ def fetch_new_threads(user_id, user_email, access_token, count=5):
     return stats
 
 
-def sync_existing_threads(user_id, user_email, access_token):
+def sync_existing_threads(user_id, user_email, access_token, last_sync=None):
     """
     Sync existing threads with new emails from Gmail
+
+    Args:
+        user_id: ID of the user
+        user_email: User's email address
+        access_token: OAuth access token
+        last_sync: Optional datetime to only fetch emails since this date
+
     Returns: dict with stats
     """
     stats = {
@@ -635,10 +705,14 @@ def sync_existing_threads(user_id, user_email, access_token):
                 # Normalize subject for search
                 normalized_subject = re.sub(r'^(Re:|Fwd:)\s*', '', thread.subject, flags=re.IGNORECASE).strip()
 
+                # Build search query with optional date filter
                 # Gmail's X-GM-THRID can't be used directly in IMAP SEARCH
                 # Instead, we search by subject and filter by X-GM-THRID after fetching
-                # This is actually more reliable than trying complex IMAP queries
-                search_query = f'SUBJECT "{normalized_subject}"'
+                if last_sync:
+                    since_date = last_sync.strftime("%d-%b-%Y")
+                    search_query = f'SINCE {since_date} SUBJECT "{normalized_subject}"'
+                else:
+                    search_query = f'SUBJECT "{normalized_subject}"'
 
                 if thread.gmail_thread_id:
                     print(f"Searching for thread (Gmail ID: {thread.gmail_thread_id[:16]}...) by subject: '{normalized_subject}'")

@@ -11,6 +11,7 @@ class User(db.Model):
     name = db.Column(db.String(120))
     picture = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    last_sync = db.Column(db.DateTime, nullable=True)  # Last successful sync timestamp
 
     threads = db.relationship('Thread', backref='user', lazy=True)
     messages = db.relationship('Message', backref='user', lazy=True)
@@ -27,6 +28,7 @@ class Thread(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     messages = db.relationship("Message", backref="thread", lazy=True)
+    uploads = db.relationship("Upload", backref="thread", lazy=True)
 
 
 class Message(db.Model):
@@ -45,6 +47,17 @@ class Message(db.Model):
     label_ids = db.Column(db.String(255))
     move = db.Column(db.String(20), nullable=True)  # Chess move in UCI format
     evaluation_score = db.Column(db.Integer, nullable=True)  # Stockfish centipawn evaluation
+
+
+class Upload(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    thread_id = db.Column(db.Integer, db.ForeignKey("thread.id"), nullable=False)
+    message_id = db.Column(db.Integer, db.ForeignKey("message.id"), nullable=True)  # Link to specific message
+    filename = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    file_size = db.Column(db.Integer, nullable=False)  # Size in bytes
+    mime_type = db.Column(db.String(100))
+    uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class CustomLabel(db.Model):

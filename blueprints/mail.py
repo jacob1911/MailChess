@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app, send_from_directory
 from datetime import datetime, timezone
-from models import db, Thread, Message, User, CustomLabel
+from models import db, Thread, Message, User, CustomLabel, Upload
 from utils.email_utils import fetch_new_threads, sync_existing_threads, clean_message_body
 from utils.gmail_api import send_email_via_api
 from utils.chess_utils import get_or_create_fen, process_move, update_thread_fen, get_position_evaluation, calculate_won_games
@@ -9,6 +9,7 @@ from openai import OpenAI
 import chess
 import os
 import re
+import mimetypes
 
 mail_bp = Blueprint('mail', __name__)
 
@@ -382,6 +383,53 @@ def thread(thread_id):
                 db.session.add(msg)
                 db.session.commit()
 
+                # Save attachments to database
+                if attachments:
+                    # Create upload directory if it doesn't exist
+                    upload_dir = os.path.join(current_app.root_path, 'static', 'uploads')
+                    os.makedirs(upload_dir, exist_ok=True)
+
+                    for file_obj in attachments:
+                        if file_obj and file_obj.filename:
+                            # Secure the filename
+                            filename = secure_filename(file_obj.filename)
+
+                            # Add timestamp to make filename unique
+                            import time
+                            unique_filename = f"{user_id}_{int(time.time() * 1000)}_{filename}"
+
+                            # Save file to disk
+                            file_path = os.path.join(upload_dir, unique_filename)
+
+                            # Read file content once (since we already used it for email)
+                            # Need to reset file pointer first
+                            file_obj.seek(0)
+                            file_data = file_obj.read()
+
+                            # Save to disk
+                            with open(file_path, 'wb') as f:
+                                f.write(file_data)
+
+                            # Determine MIME type
+                            mime_type, _ = mimetypes.guess_type(filename)
+                            if not mime_type:
+                                mime_type = 'application/octet-stream'
+
+                            # Create Upload record
+                            upload = Upload(
+                                thread_id=thread.id,
+                                message_id=msg.id,  # Link to the specific message
+                                filename=filename,  # Store original filename
+                                file_path=unique_filename,  # Store unique filename for disk
+                                file_size=len(file_data),
+                                mime_type=mime_type
+                            )
+                            db.session.add(upload)
+
+                            print(f"[DEBUG] Saved attachment to database: {filename} ({len(file_data)} bytes)")
+
+                    db.session.commit()
+
                 # Clean up session recipient after first message is sent
                 session_key = f'thread_{thread.id}_recipient'
                 if session_key in session:
@@ -468,7 +516,11 @@ def fetch_threads():
     count = int(data.get('count', 5))
 
     try:
-        stats = fetch_new_threads(user_id, user_email, access_token, count)
+        # Get user's last sync timestamp for incremental sync
+        user_obj = User.query.get(user_id)
+        last_sync = user_obj.last_sync if user_obj else None
+
+        stats = fetch_new_threads(user_id, user_email, access_token, count, last_sync)
 
         # Check for auth errors
         if stats.get('errors'):
@@ -479,6 +531,11 @@ def fetch_threads():
                         "error": "OAuth token er ugyldig. Log venligst UD og IND igen.",
                         "require_reauth": True
                     }), 401
+
+        # Update last_sync timestamp on successful fetch
+        if user_obj and stats['threads_fetched'] >= 0:
+            user_obj.last_sync = datetime.now(timezone.utc)
+            db.session.commit()
 
         return jsonify({
             "success": True,
@@ -544,7 +601,11 @@ def sync_existing():
         }), 401
 
     try:
-        stats = sync_existing_threads(user_id, user_email, access_token)
+        # Get user's last sync timestamp for incremental sync
+        user_obj = User.query.get(user_id)
+        last_sync = user_obj.last_sync if user_obj else None
+
+        stats = sync_existing_threads(user_id, user_email, access_token, last_sync)
 
         # Check for auth errors
         if stats.get('errors'):
@@ -555,6 +616,11 @@ def sync_existing():
                         "error": "OAuth token er ugyldig. Log venligst UD og IND igen.",
                         "require_reauth": True
                     }), 401
+
+        # Update last_sync timestamp on successful sync
+        if user_obj and stats['messages_added'] >= 0:
+            user_obj.last_sync = datetime.now(timezone.utc)
+            db.session.commit()
 
         return jsonify({
             "success": True,
@@ -1393,4 +1459,329 @@ def delete_custom_label(label_id):
         return jsonify({
             "success": False,
             "error": f"Failed to delete label: {str(e)}"
+        }), 500
+
+
+@mail_bp.route("/download/<int:upload_id>")
+def download_file(upload_id):
+    """
+    Download an uploaded file from a thread.
+
+    URL Parameters:
+        upload_id (int): Database ID of the upload
+
+    Returns:
+        File download with proper Content-Type header
+
+    Dependencies:
+        - Session: user.id for authentication
+        - Models: Upload, Thread
+        - Flask: send_from_directory
+
+    Authorization:
+        Verifies user owns the thread that contains the upload
+    """
+    if session.get("user") is None:
+        flash("Du skal være logget ind for at downloade filer", "error")
+        return redirect(url_for("auth.login"))
+
+    user = session.get("user")
+    user_id = user.get("id")
+
+    # Get upload and verify ownership
+    upload = Upload.query.get_or_404(upload_id)
+    thread = Thread.query.get_or_404(upload.thread_id)
+
+    if thread.user_id != user_id:
+        flash("Du har ikke tilladelse til at downloade denne fil", "error")
+        return redirect(url_for("mail.inbox"))
+
+    # Send file from uploads directory
+    upload_dir = os.path.join(current_app.root_path, 'static', 'uploads')
+
+    return send_from_directory(
+        upload_dir,
+        upload.file_path,
+        as_attachment=True,
+        download_name=upload.filename,  # Use original filename for download
+        mimetype=upload.mime_type
+    )
+
+
+@mail_bp.route("/api/message/<int:message_id>/delete", methods=["DELETE"])
+def delete_message(message_id):
+    """
+    Delete a message from the local database (does NOT delete from Gmail).
+
+    URL Parameters:
+        message_id (int): Database ID of the message
+
+    Returns:
+        JSON response with:
+            success (bool): Whether operation succeeded
+            message (str): Status message
+            error (str): Error message if failed
+
+    Dependencies:
+        - Session: user.id for authentication
+        - Models: Message, Thread, db.session
+
+    Side Effects:
+        - DELETES Message record from local database
+        - Does NOT affect Gmail (message remains in Gmail)
+        - Transaction rolled back if any error occurs
+
+    Authorization:
+        Verifies user owns the message (403 if not)
+    """
+    if session.get("user") is None:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user = session.get("user")
+    user_id = user.get("id")
+
+    # Get message and verify ownership
+    message = Message.query.get_or_404(message_id)
+    if message.user_id != user_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        # Get thread to update last_updated timestamp
+        thread = Thread.query.get(message.thread_id)
+
+        # Delete the message
+        db.session.delete(message)
+
+        # Update thread's last_updated timestamp
+        if thread:
+            thread.last_updated = datetime.now(timezone.utc)
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Besked slettet fra lokal database"
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "error": f"Fejl ved sletning af besked: {str(e)}"
+        }), 500
+
+
+@mail_bp.route("/api/thread/<int:thread_id>/delete", methods=["DELETE"])
+def delete_thread(thread_id):
+    """
+    Delete an entire thread and all its messages from local database (does NOT delete from Gmail).
+
+    URL Parameters:
+        thread_id (int): Database ID of the thread
+
+    Returns:
+        JSON response with:
+            success (bool): Whether operation succeeded
+            message (str): Status message with deletion stats
+            stats (dict): Deletion statistics
+                messages_deleted (int): Number of messages deleted
+                uploads_deleted (int): Number of uploads deleted
+            error (str): Error message if failed
+
+    Dependencies:
+        - Session: user.id for authentication
+        - Models: Thread, Message, Upload, db.session
+
+    Side Effects:
+        - DELETES Thread record from local database
+        - DELETES all Message records in the thread
+        - DELETES all Upload records in the thread
+        - Deletes upload files from disk
+        - Does NOT affect Gmail (thread remains in Gmail)
+        - Transaction rolled back if any error occurs
+
+    Authorization:
+        Verifies user owns the thread (403 if not)
+    """
+    if session.get("user") is None:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user = session.get("user")
+    user_id = user.get("id")
+
+    # Get thread and verify ownership
+    thread = Thread.query.get_or_404(thread_id)
+    if thread.user_id != user_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        # Count messages for stats
+        messages_count = Message.query.filter_by(thread_id=thread_id).count()
+
+        # Delete all uploads and their files
+        uploads = Upload.query.filter_by(thread_id=thread_id).all()
+        uploads_count = len(uploads)
+
+        for upload in uploads:
+            # Delete file from disk
+            try:
+                upload_dir = os.path.join(current_app.root_path, 'static', 'uploads')
+                file_path = os.path.join(upload_dir, upload.file_path)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception as e:
+                print(f"[WARNING] Could not delete upload file {upload.file_path}: {str(e)}")
+
+            db.session.delete(upload)
+
+        # Delete all messages in thread
+        Message.query.filter_by(thread_id=thread_id).delete()
+
+        # Delete the thread
+        db.session.delete(thread)
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"Tråd slettet fra lokal database",
+            "stats": {
+                "messages_deleted": messages_count,
+                "uploads_deleted": uploads_count
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "error": f"Fejl ved sletning af tråd: {str(e)}"
+        }), 500
+
+
+@mail_bp.route("/api/forward-message", methods=["POST"])
+def forward_message():
+    """
+    Forward a message to a new recipient.
+
+    JSON Body Parameters:
+        recipient (str): Email address of the recipient
+        subject (str): Subject line (should include "Fwd: " prefix)
+        body (str): Message body (HTML or plain text)
+        is_html (bool): Whether the body is HTML
+
+    Returns:
+        JSON response with:
+            success (bool): Whether operation succeeded
+            message (str): Status message
+            error (str): Error message if failed
+
+    Dependencies:
+        - Session: user info and access_token
+        - Utils: send_email_via_api from gmail_api
+
+    Side Effects:
+        - Sends email via Gmail API
+        - Does NOT create thread or message in local database
+
+    Authorization:
+        Requires authenticated user with valid access token
+    """
+    if session.get("user") is None:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user = session.get("user")
+    user_email = user.get("email")
+    access_token = session.get("access_token")
+
+    if not access_token:
+        return jsonify({
+            "error": "Ingen access token fundet",
+            "require_reauth": True
+        }), 401
+
+    try:
+        data = request.get_json()
+        message_id = data.get("message_id")
+        recipient = data.get("recipient")
+        subject = data.get("subject")
+        body = data.get("body")
+        is_html = data.get("is_html", True)
+
+        if not recipient or not subject or not body:
+            return jsonify({
+                "success": False,
+                "error": "Modtager, emne og besked er påkrævet"
+            }), 400
+
+        # Get attachments for this message if message_id provided
+        attachments = []
+        if message_id:
+            uploads = Upload.query.filter_by(message_id=message_id).all()
+            upload_dir = os.path.join(current_app.root_path, 'static', 'uploads')
+
+            for upload in uploads:
+                try:
+                    file_path = os.path.join(upload_dir, upload.file_path)
+                    if os.path.exists(file_path):
+                        # Read file from disk
+                        with open(file_path, 'rb') as f:
+                            file_data = f.read()
+
+                        # Create a file-like object
+                        from io import BytesIO
+                        file_obj = BytesIO(file_data)
+                        file_obj.filename = upload.filename
+                        file_obj.content_type = upload.mime_type
+
+                        attachments.append(file_obj)
+                        print(f"[DEBUG] Added attachment for forward: {upload.filename} ({upload.file_size} bytes)")
+                    else:
+                        print(f"[WARNING] Attachment file not found: {file_path}")
+                except Exception as e:
+                    print(f"[ERROR] Could not load attachment {upload.filename}: {str(e)}")
+                    continue
+
+        # Send email via Gmail API
+        result = send_email_via_api(
+            access_token,
+            user_email,
+            recipient,
+            subject,
+            body,
+            is_html=is_html,
+            in_reply_to=None,
+            references=None,
+            thread_id=None,
+            attachments=attachments if attachments else None
+        )
+
+        if result.get('success'):
+            return jsonify({
+                "success": True,
+                "message": "Besked videresendt!",
+                "attachments_count": len(attachments)
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Kunne ikke sende email"
+            }), 500
+
+    except Exception as e:
+        print(f"[ERROR] Forward failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+        # Check if it's an OAuth error
+        if "OAuth token" in str(e) or "401" in str(e):
+            return jsonify({
+                "success": False,
+                "error": str(e),
+                "require_reauth": True
+            }), 401
+
+        return jsonify({
+            "success": False,
+            "error": f"Fejl ved videresendelse: {str(e)}"
         }), 500
