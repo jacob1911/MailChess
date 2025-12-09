@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="da">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,7 +32,6 @@
 
         .wheel-spinning {
             animation: spin-wheel-keyframes 2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; 
-            /* Uses cubic-bezier for a more 'realistic' wheel start-fast-slow-stop effect */
         }
         /* -------------------------------- */
     </style>
@@ -218,12 +217,13 @@
             </ul>
 
             <div class="flex items-center space-x-3">
-                <a href="/set_language/da" 
+                <!-- FIX: Call JavaScript function to use AJAX API endpoint -->
+                <a href="#" onclick="setLanguage('da'); return false;"
                    class="text-sm font-semibold p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-150" 
                    title="Skift til dansk">
                     🇩🇰
                 </a>
-                <a href="/set_language/en" 
+                <a href="#" onclick="setLanguage('en'); return false;"
                    class="text-sm font-semibold p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-150"
                    title="Skift til engelsk">
                     🇺🇸
@@ -372,19 +372,79 @@
                     <span>⚪ White</span>
                 </div>
                 <div>
-                    <input type="range" id="evalSlider" min="-1000" max="1000" step="10" value="37" disabled>
-                    <div id="evalValue">evaluation: 37</div>
+                    <input type="range" id="evalSlider" min="-1000" max="1000" step="10" value="38" disabled>
+                    <div id="evalValue">evaluation: 38</div>
                 </div>
             </div>
         </div>
-        <p class="dark:text-white">Stockscore = 37</p>
+        <p class="dark:text-white">Stockscore = 38</p>
 
     </div>
 </div>
 
 
     <script>
-        // ... (existing JS functions)
+        // --- LANGUAGE SWITCH FIX (AJAX API CALL + RELOAD) ---
+        async function setLanguage(lang_code) {
+             try {
+                // 1. Call the new Flask API endpoint to update the session variable
+                const response = await fetch(`http://127.0.0.1:5000/api/set_language/${lang_code}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+
+                if (data.success) {
+                    // 2. FORCE a full page reload to fetch the new translations
+                    // Adding true forces the browser to bypass its cache and request fresh content
+                    window.location.reload(true); 
+                } else {
+                    console.error("Failed to set language:", data.error);
+                }
+
+             } catch (error) {
+                 console.error("Network error during language change:", error);
+                 // Fallback to absolute navigation as a last resort
+                 window.location.href = `http://127.0.0.1:5000/set_language/${lang_code}`;
+             }
+        }
+        // ----------------------------------------------------
+
+        // --- DARK MODE LOGIC (As previously confirmed) ---
+
+        // Function to update the icon based on the current theme
+        function updateThemeIcon() {
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            // 1. Update the icon in the Navbar (navThemeIcon)
+            const navIcon = document.getElementById('navThemeIcon');
+            if (navIcon) {
+                navIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+
+            // 2. Update the icon in the Inbox Toolbar (themeIcon, if it exists)
+            const toolbarIcon = document.getElementById('themeIcon');
+            if (toolbarIcon) { 
+                toolbarIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+
+        // Function to toggle the theme
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            
+            if (isDark) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+
+            // Update the icon after the theme has been toggled
+            updateThemeIcon();
+        }
 
         // Run on load
         document.addEventListener('DOMContentLoaded', updateThemeIcon);
