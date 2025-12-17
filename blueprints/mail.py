@@ -900,6 +900,103 @@ def update_thread_labels(thread_id):
         }), 500
 
 
+@mail_bp.route("/api/threads/<int:thread_id>/toggle-label", methods=["POST"])
+def toggle_thread_label(thread_id):
+    """Toggle a label on all messages in a thread"""
+    if session.get("user") is None:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user = session.get("user")
+    user_id = user.get("id")
+
+    thread = Thread.query.get_or_404(thread_id)
+    if thread.user_id != user_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    data = request.get_json()
+    label = data.get('label')
+    
+    if not label:
+        return jsonify({"error": "No label specified"}), 400
+
+    try:
+        # Get all messages in thread (don't filter by status yet to debug)
+        messages = Message.query.filter_by(thread_id=thread_id).all()
+        
+        updated_count = 0
+        for msg in messages:
+            # Skip trashed messages
+            if msg.status != 'Active':
+                continue
+                
+            current_labels = set()
+            if msg.label_ids:
+                current_labels = set(lbl.strip() for lbl in msg.label_ids.split(',') if lbl.strip())
+
+            # Toggle: if present, remove; if absent, add
+            if label in current_labels:
+                current_labels.discard(label)
+            else:
+                current_labels.add(label)
+
+            msg.label_ids = ','.join(sorted(current_labels)) if current_labels else ""
+            updated_count += 1
+
+        db.session.commit()
+        return jsonify({"success": True, "message": f"Toggled label '{label}'", "updated": updated_count}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] toggle_thread_label: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@mail_bp.route("/api/threads/<int:thread_id>/mark-read", methods=["POST"])
+def mark_thread_read(thread_id):
+    """Mark all messages in a thread as read (remove UNREAD label)"""
+    if session.get("user") is None:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user = session.get("user")
+    user_id = user.get("id")
+
+    thread = Thread.query.get_or_404(thread_id)
+    if thread.user_id != user_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        # Get all messages in thread
+        messages = Message.query.filter_by(thread_id=thread_id).all()
+        
+        updated_count = 0
+        for msg in messages:
+            # Skip trashed messages
+            if msg.status != 'Active':
+                continue
+                
+            current_labels = set()
+            if msg.label_ids:
+                current_labels = set(lbl.strip() for lbl in msg.label_ids.split(',') if lbl.strip())
+
+            # Remove UNREAD label
+            if 'UNREAD' in current_labels:
+                current_labels.discard('UNREAD')
+                msg.label_ids = ','.join(sorted(current_labels)) if current_labels else ""
+                updated_count += 1
+
+        db.session.commit()
+        return jsonify({"success": True, "message": "Marked as read", "updated": updated_count}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] mark_thread_read: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @mail_bp.route("/debug/message/<int:message_id>", methods=["GET"])
 def debug_message(message_id):
     if session.get("user") is None:

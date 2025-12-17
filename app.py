@@ -106,7 +106,10 @@ def index():
     # If not logged in, redirect them to the login page
     return redirect(url_for("auth.auth_login_page"))
 
+# INITIALIZE DATABASE ONCE WHEN APP STARTS (before any requests)
+# This ensures DB exists whether app is run via desktop_main.py or app.py directly
+with app.app_context():
+    db.create_all()
+
 if __name__ == "__main__":
-    if not os.path.exists("instance/mailchess.db"):
-        init_db()
     app.run(debug=True)

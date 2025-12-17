@@ -448,6 +448,75 @@
         }
     }
 
+    // Toggle a label on a thread (STARRED, IMPORTANT, UNREAD)
+    async function toggleLabel(event, threadId, label) {
+        event.stopPropagation();
+        
+        try {
+            const response = await fetch(`/api/threads/${threadId}/toggle-label`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ label: label })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Show confirmation
+                const statusMessage = document.getElementById('statusMessage');
+                statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
+                statusMessage.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Succes! ${data.updated} beskeder blev opdateret.`;
+                statusMessage.classList.remove('hidden');
+                setTimeout(() => statusMessage.classList.add('hidden'), 3000);
+                
+                // Update the thread list to reflect the change
+                await updateThreadList();
+            } else {
+                console.error('Error toggling label:', data);
+                alert('Fejl: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Netværksfejl: ' + error.message);
+        }
+    }
+
+    // Mark a thread as read (remove UNREAD label)
+    async function markAsRead(event, threadId) {
+        event.stopPropagation();
+        
+        try {
+            const response = await fetch(`/api/threads/${threadId}/mark-read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Show confirmation
+                const statusMessage = document.getElementById('statusMessage');
+                statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
+                statusMessage.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Markeret som læst! ${data.updated} beskeder blev opdateret.`;
+                statusMessage.classList.remove('hidden');
+                setTimeout(() => statusMessage.classList.add('hidden'), 3000);
+                
+                // Update the thread list to reflect the change
+                await updateThreadList();
+            } else {
+                console.error('Error marking as read:', data);
+                alert('Fejl: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Netværksfejl: ' + error.message);
+        }
+    }
+
     // Fetch new threads
     async function fetchNewThreads() {
         const fetchBtn = document.getElementById('fetchBtn');
@@ -759,6 +828,30 @@
                 return `<span class="label-badge ${labelClass}">${icon}</span>`;
             }
         }).join('');
+    }
+
+    // Filter threads by label
+    function filterThreads() {
+        const selectedLabel = document.getElementById('labelFilter').value;
+        const threadsList = document.getElementById('threadsList');
+        const threadItems = threadsList.querySelectorAll('.thread-item');
+
+        threadItems.forEach(item => {
+            const labels = item.getAttribute('data-labels');
+            
+            // Show all if no filter selected
+            if (!selectedLabel) {
+                item.style.display = '';
+                return;
+            }
+            
+            // Check if message has the selected label
+            if (labels && labels.includes(selectedLabel)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
     }
 
     // Update thread list after sync

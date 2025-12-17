@@ -6,6 +6,7 @@ import re
 import chess
 from email.mime.text import MIMEText
 from email.utils import formataddr, parsedate_to_datetime, parseaddr
+from email.header import decode_header
 from models import db, Thread, Message, User
 from html import escape
 import html.parser
@@ -13,6 +14,37 @@ from datetime import datetime, timezone
 
 # Import from other utils if needed, or keep local if self-contained.
 # Note: cyclic imports can be tricky, so we import inside functions where possible.
+
+def decode_header_value(header_value):
+    """
+    Decode email header values that may be encoded in RFC 2047 format (e.g., =?utf-8?B?...?=)
+    Returns a plain string with decoded text.
+    """
+    if not header_value:
+        return ""
+    
+    try:
+        # decode_header returns a list of (decoded_bytes, charset) tuples
+        decoded_parts = decode_header(header_value)
+        result = []
+        
+        for part, charset in decoded_parts:
+            if isinstance(part, bytes):
+                # Decode bytes using the specified charset, or UTF-8 as fallback
+                encoding = charset if charset else 'utf-8'
+                try:
+                    result.append(part.decode(encoding, errors='replace'))
+                except (LookupError, TypeError):
+                    # If charset is invalid or unknown, try UTF-8
+                    result.append(part.decode('utf-8', errors='replace'))
+            else:
+                # Already a string
+                result.append(part)
+        
+        return ''.join(result)
+    except Exception as e:
+        print(f"[WARNING] Failed to decode header: {e}")
+        return header_value
 
 def extract_email_address(email_header):
     """Extract just the email address from header like 'Name <email@example.com>'"""
@@ -283,6 +315,15 @@ def store_thread(user_id, thread_emails):
         references = msg.get("References")
         subject = msg.get("Subject", "")
         
+        # Fetch labels from Gmail API
+        label_list = []
+        if access_token and gmail_message_id:
+            try:
+                from utils.gmail_api import get_message_labels
+                label_list = get_message_labels(access_token, gmail_message_id)
+            except:
+                pass
+        
         existing_msg = Message.query.filter_by(gmail_message_id=gmail_message_id, thread_id=new_thread.id).first()
 
         if not existing_msg:
@@ -298,7 +339,7 @@ def store_thread(user_id, thread_emails):
                 body_html=body if is_html else "",
                 in_reply_to=in_reply_to,
                 references=references,
-                label_ids="",
+                label_ids=','.join(label_list) if label_list else "",
                 move=move_uci
             )
             db.session.add(new_message)
@@ -611,12 +652,15 @@ def sync_existing_threads(user_id, user_email, access_token):
                     print(f"Skipping thread without Gmail ID: {thread.subject}")
                     continue
 
-                # Normalize subject for search
-                normalized_subject = re.sub(r'^(Re:|Fwd:)\s*', '', thread.subject, flags=re.IGNORECASE).strip()
+                # Decode subject in case it contains RFC 2047 encoded text (e.g., special characters)
+                decoded_subject = decode_header_value(thread.subject)
+                
+                # Normalize subject for search (remove Re: and Fwd: prefixes)
+                normalized_subject = re.sub(r'^(Re:|Fwd:)\s*', '', decoded_subject, flags=re.IGNORECASE).strip()
 
                 print(f"Searching for thread (Gmail ID: {thread.gmail_thread_id[:16]}...) by subject: '{normalized_subject}'")
 
-                # Search by subject
+                # Search by subject (using decoded subject to avoid IMAP parse errors)
                 result, data = imap.search(None, f'SUBJECT "{normalized_subject}"')
 
                 if result != "OK" or not data[0]:
