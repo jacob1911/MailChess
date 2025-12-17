@@ -58,28 +58,15 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 echo [OK] All dependencies installed
-
-REM ------------------------------------------------------------
-REM 4. DIRECTORY & ENVIRONMENT CHECKS
-REM ------------------------------------------------------------
 echo.
-echo [4/5] Verifying environment...
 
-REM *** WARNING: KEYS REQUIRED ***
-if not exist "environ.env" (
-    echo.
-    echo [WARNING] environ.env not found!
-    echo.
-    echo You MUST create a file named 'environ.env' in this folder with the following content:
-    echo.
-    echo FLASK_SECRET_KEY=your_secret_key
-    echo GOOGLE_CLIENT_ID=your_client_id
-    echo GOOGLE_CLIENT_SECRET=your_client_secret
-    echo OPENAI_API_KEY=your_openai_key
-    echo.
+REM Run environment setup (generates environ.env with Flask secret key)
+echo [4/5] Setting up environment configuration...
+python setup_env.py
+if %errorlevel% neq 0 (
+    echo [ERROR] Environment setup failed
     pause
-) else (
-    echo [OK] environ.env found.
+    exit /b 1
 )
 
 REM Create directories

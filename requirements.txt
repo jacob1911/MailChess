@@ -6,7 +6,6 @@ Flask==3.0.0
 Werkzeug==3.0.1
 waitress==3.0.2
 
-
 # Database
 Flask-SQLAlchemy==3.1.1
 SQLAlchemy==2.0.23
@@ -25,11 +24,11 @@ google-api-python-client==2.111.0
 chess==1.10.0
 
 # OpenAI Integration
-openai==1.6.1
+openai==2.9.0
 
 # Utilities
-Werkzeug==3.0.1
 requests==2.31.0
+bleach==6.1.0
 
 # GUI (if needed)
 pywebview>=3.0

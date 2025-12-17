@@ -7,6 +7,9 @@ instance/
 *.db
 *.sqlite
 
+# Webview data (browser cache/cookies for desktop app)
+webview_data/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -26,3 +29,9 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+
+# Stockfish build artifacts (compiled binaries and object files)
+stockfish/*.o
+stockfish/src/*.o
+stockfish/src/stockfish
+stockfish/src/stockfish.exe
