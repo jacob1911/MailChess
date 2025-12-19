@@ -20,7 +20,7 @@ def create_environ_file():
     
     if os.path.exists(ENV_FILE):
         print(f"✓ {ENV_FILE} already exists. Skipping creation.")
-        return
+        return True # FIXED: Now returns True so start.bat doesn't report failure
     
     print(f"Generating {ENV_FILE}...")
     
@@ -41,7 +41,7 @@ GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # OpenAI API Key
-# ⚠️  IMPORTANT: Use the shared OpenAI API key provided by the team.
+# IMPORTANT: Use the shared OpenAI API key provided by the team.
 # This key has paid tokens that are shared for development.
 # DO NOT create a new personal key - use the team's key instead!
 # Contact the development team if you need the key.
@@ -49,10 +49,11 @@ OPENAI_API_KEY=sk-proj-your-team-openai-api-key
 """
     
     try:
-        with open(ENV_FILE, 'w') as f:
+        # FIXED: Added encoding='utf-8' to handle special characters/emojis
+        with open(ENV_FILE, 'w', encoding='utf-8') as f:
             f.write(content)
         print(f"✓ Created {ENV_FILE}")
-        print(f"\n⚠️  IMPORTANT: You must fill in the missing credentials:")
+        print(f"\nIMPORTANT: You must fill in the missing credentials:")
         print(f"   1. GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET from Google Cloud Console")
         print(f"   2. OPENAI_API_KEY - Use the SHARED team key (not your own!)")
         print(f"\n   See comments in {ENV_FILE} for instructions.")
@@ -85,7 +86,8 @@ OPENAI_API_KEY=sk-proj-your-openai-api-key
         return  # Already exists
     
     try:
-        with open(EXAMPLE_FILE, 'w') as f:
+        # FIXED: Added encoding='utf-8'
+        with open(EXAMPLE_FILE, 'w', encoding='utf-8') as f:
             f.write(example_content)
         print(f"✓ Created {EXAMPLE_FILE} (for reference)")
     except Exception as e:
