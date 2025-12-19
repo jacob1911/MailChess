@@ -242,7 +242,7 @@ def extract_chess_move(body):
     return None
 
 
-def store_thread(user_id, thread_emails):
+def store_thread(user_id, thread_emails, access_token=None):
     """Store email thread in database with all its messages"""
     if not thread_emails:
         return None
@@ -601,7 +601,7 @@ def fetch_new_threads(user_id, user_email, access_token, count=5):
             # Create new thread
             first_msg = messages[0]['msg']
             subject = first_msg.get("Subject", "No Subject")
-            store_thread(user_id, messages)
+            store_thread(user_id, messages, access_token)
             stats['threads_fetched'] += 1
             stats['messages_added'] += len(messages)
             print(f"Created new thread: {subject} ({len(messages)} messages)")
