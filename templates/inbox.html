@@ -18,6 +18,30 @@
     .label-starred { background-color: #FEF3C7; color: #D97706; }
     .label-important { background-color: #FEE2E2; color: #DC2626; }
     .label-inbox { background-color: #DCFCE7; color: #16A34A; }
+
+    /* Video Intro Styles */
+    #videoIntroOverlay {
+        opacity: 1;
+        transition: opacity 0.8s ease-out;
+    }
+
+    #videoIntroOverlay.fade-out {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    #introVideo {
+        object-fit: contain;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        #introVideo {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -142,11 +166,11 @@
             </h2>
             <div class="flex space-x-2 items-center">
                 <select id="labelFilter" onchange="filterThreads()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600">
-                    <option value="">Alle labels</option>
+                    <option value="">Indbakke</option>
                     <option value="UNREAD">Ulæste</option>
                     <option value="STARRED">Stjernede</option>
                     <option value="IMPORTANT">Vigtige</option>
-                    <option value="INBOX">I indbakke</option>
+                    
                 </select>
                 <input type="number" id="threadCount" value="5" min="1" max="50" class="w-16 px-2 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-center">
                 <button id="fetchBtn" onclick="fetchNewThreads()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i id="fetchIcon" class="fas fa-download mr-2"></i> Hent</button>
@@ -234,6 +258,9 @@
                         <button onclick="markAsRead(event, {{ t.id }})" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
                             <i class="fas fa-envelope-open text-blue-500"></i>
                         </button>
+                        <button onclick="deleteThread(event, {{ t.id }})" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Slet tråd">
+                            <i class="fas fa-trash text-red-500"></i>
+                        </button>
                         <div class="relative">
                             <button onclick="toggleCustomLabelMenu(event, {{ t.id }})" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
                                 <i class="fas fa-tags text-purple-500"></i>
@@ -274,6 +301,21 @@
             Luk
         </button>
     </div>
+</div>
+
+<!-- Video Intro Overlay -->
+<div id="videoIntroOverlay" class="hidden fixed inset-0 bg-black z-60 flex items-center justify-center">
+    <video
+        id="introVideo"
+        class="max-w-full max-h-full"
+        autoplay
+        muted
+        playsinline
+        webkit-playsinline
+        preload="auto">
+        <source src="{{ url_for('static', filename='hest.mp4') }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
 </div>
 {% endblock %}
 
@@ -517,6 +559,44 @@
         }
     }
 
+    async function deleteThread(event, threadId) {
+        event.stopPropagation();
+
+        // Confirm deletion
+        if (!confirm('Er du sikker på at du vil slette denne tråd? Dette kan ikke fortrydes!')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/threads/${threadId}/delete`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Show confirmation
+                const statusMessage = document.getElementById('statusMessage');
+                statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
+                statusMessage.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Tråd slettet! ${data.messages_deleted} beskeder blev slettet.`;
+                statusMessage.classList.remove('hidden');
+                setTimeout(() => statusMessage.classList.add('hidden'), 3000);
+
+                // Update the thread list to reflect the change
+                await updateThreadList();
+            } else {
+                console.error('Error deleting thread:', data);
+                alert('Fejl: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Netværksfejl: ' + error.message);
+        }
+    }
+
     // Fetch new threads
     async function fetchNewThreads() {
         const fetchBtn = document.getElementById('fetchBtn');
@@ -608,15 +688,32 @@
             if (data.success) {
                 const stats = data.stats;
                 statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
-                statusMessage.innerHTML = `
+
+                let message = `
                     <i class="fas fa-check-circle mr-2"></i>
                     <strong>Synkronisering fuldført!</strong><br>
                     <small>
-                        Opdaterede tråde: ${stats.threads_updated} |
-                        Nye beskeder: ${stats.messages_added} |
-                        Træk parset: ${stats.moves_parsed}
-                    </small>
+                        Emails tjekket: ${stats.emails_checked || 0}
                 `;
+
+                if (stats.threads_updated > 0) {
+                    message += ` | Opdaterede tråde: ${stats.threads_updated}`;
+                }
+
+                if (stats.threads_created > 0) {
+                    message += ` | <span class="font-semibold text-green-800 dark:text-green-200">Nye tråde: ${stats.threads_created}</span>`;
+                }
+
+                if (stats.messages_added > 0) {
+                    message += ` | Nye beskeder: ${stats.messages_added}`;
+                }
+
+                if (stats.moves_parsed > 0) {
+                    message += ` | Træk parset: ${stats.moves_parsed}`;
+                }
+
+                message += `</small>`;
+                statusMessage.innerHTML = message;
 
                 // Update thread list
                 await updateThreadList();
@@ -639,6 +736,59 @@
         } finally {
             syncBtn.disabled = false;
             syncIcon.classList.remove('fa-spin');
+        }
+    }
+
+    async function clearDatabase() {
+        const clearBtn = document.getElementById('clearBtn');
+        const clearIcon = document.getElementById('clearIcon');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // Confirm action
+        if (!confirm('Er du sikker på at du vil rydde alle tråde og beskeder? Dette kan ikke fortrydes!')) {
+            return;
+        }
+
+        // Disable button and show loading
+        clearBtn.disabled = true;
+        clearIcon.classList.add('fa-spin');
+
+        // Show status message
+        statusMessage.className = 'mb-4 p-3 rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100';
+        statusMessage.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Rydder database...';
+        statusMessage.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/api/clear-database', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
+                statusMessage.innerHTML = `
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <strong>Database ryddet!</strong><br>
+                    Slettede ${data.stats.threads_deleted} tråde og ${data.stats.messages_deleted} beskeder.
+                `;
+
+                // Reload the page after 2 seconds
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                showError(statusMessage, data);
+            }
+        } catch (error) {
+            statusMessage.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
+            statusMessage.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i><strong>Fejl:</strong> ${error.message}`;
+        } finally {
+            clearBtn.disabled = false;
+            clearIcon.classList.remove('fa-spin');
         }
     }
 
@@ -941,6 +1091,11 @@
                                         title="Marker som læst">
                                     <i class="fas fa-envelope-open text-blue-500"></i>
                                 </button>
+                                <button onclick="deleteThread(event, ${thread.id})"
+                                        class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200"
+                                        title="Slet tråd">
+                                    <i class="fas fa-trash text-red-500"></i>
+                                </button>
                                 <div class="relative">
                                     <button onclick="toggleCustomLabelMenu(event, ${thread.id})"
                                             class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200"
@@ -972,5 +1127,48 @@
             console.error('Error updating thread list:', error);
         }
     }
+
+    // --- VIDEO INTRO LOGIC ---
+    (function() {
+        // Check if video has been shown this session
+        const videoShown = sessionStorage.getItem('videoIntroShown');
+
+        if (!videoShown) {
+            // Get elements
+            const overlay = document.getElementById('videoIntroOverlay');
+            const video = document.getElementById('introVideo');
+
+            if (overlay && video) {
+                // Show the overlay
+                overlay.classList.remove('hidden');
+
+                // Set sessionStorage flag immediately to prevent re-showing on refresh
+                sessionStorage.setItem('videoIntroShown', 'true');
+
+                // Handle video end event
+                video.addEventListener('ended', function() {
+                    fadeOutAndHide();
+                });
+
+                // Handle video error
+                video.addEventListener('error', function(e) {
+                    console.error('Video failed to load:', e);
+                    // Hide overlay immediately on error
+                    overlay.classList.add('hidden');
+                });
+
+                // Fade out function
+                function fadeOutAndHide() {
+                    // Add fade-out class
+                    overlay.classList.add('fade-out');
+
+                    // After transition completes, hide the overlay completely
+                    setTimeout(function() {
+                        overlay.classList.add('hidden');
+                    }, 800); // Match the CSS transition duration
+                }
+            }
+        }
+    })();
 </script>
 {% endblock %}

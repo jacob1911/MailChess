@@ -81,17 +81,6 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 # OpenAI API Key (get from https://platform.openai.com/account/api-keys)
 OPENAI_API_KEY=sk-proj-your-openai-api-key
 """
-    
-    if os.path.exists(EXAMPLE_FILE):
-        return  # Already exists
-    
-    try:
-        # FIXED: Added encoding='utf-8'
-        with open(EXAMPLE_FILE, 'w', encoding='utf-8') as f:
-            f.write(example_content)
-        print(f"✓ Created {EXAMPLE_FILE} (for reference)")
-    except Exception as e:
-        print(f"✗ Error creating {EXAMPLE_FILE}: {e}", file=sys.stderr)
 
 def main():
     print("=" * 60)
@@ -107,8 +96,7 @@ def main():
         print("=" * 60)
         print("Setup complete! Next steps:")
         print("=" * 60)
-        print("1. Open environ.env and fill in your API credentials")
-        print("2. Run: start.bat (Windows) or python app.py (direct run)")
+        print("1. Run: start.bat (Windows) or python app.py (direct run in terminal)")
         print("=" * 60)
     else:
         sys.exit(1)

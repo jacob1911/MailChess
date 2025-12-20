@@ -43,34 +43,12 @@ This script will:
 [3/5] Setting up Virtual Environment...
 [4/5] Setting up environment configuration...
 
-⚠️  IMPORTANT: You must fill in the missing credentials:
-   1. GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET from Google Cloud Console
-   2. OPENAI_API_KEY - Use the SHARED team key (not your own!)
+
 ```
 
 ### Step 3: Configure Environment Variables
 
-After `start.bat` completes, edit the file **`environ.env`** in the project root folder.
-
-You'll see:
-```env
-FLASK_SECRET_KEY=abc123...  # ✅ Already generated
-GOOGLE_CLIENT_ID=your-google-client-id  # ❌ You need to fill this
-GOOGLE_CLIENT_SECRET=your-google-client-secret  # ❌ You need to fill this
-OPENAI_API_KEY=sk-proj-your-team-openai-api-key  # ❌ You need to fill this
-```
-
-#### Getting Google OAuth Credentials
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project (or select existing one)
-3. Enable **Google+ API**
-4. Go to **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
-5. Choose **Desktop application**
-6. Add these Authorized redirect URIs:
-   - `http://127.0.0.1:5000/`
-   - `http://127.0.0.1:5000/auth/callback`
-7. Copy the **Client ID** and **Client Secret** into `environ.env`
+After `start.bat` completes, edit the file **`environ.env`** in the project root folder if not already filled. 
 
 #### Getting OpenAI API Key
 
@@ -83,10 +61,10 @@ OPENAI_API_KEY=sk-proj-your-team-openai-api-key  # ❌ You need to fill this
 
 ### Step 4: Launch the Application
 
-Double-click **`desktop.bat`** (or run in PowerShell):
+Double-click **`desktop_start.bat`** (or run in PowerShell):
 
 ```powershell
-.\desktop.bat
+.\desktop_start.bat
 ```
 
 The app will:
@@ -113,8 +91,8 @@ A window titled **"MailChess"** should appear. You can now:
 ```powershell
 # Try upgrading pip first
 python -m pip install --upgrade pip
-# Then run start.bat again
-.\start.bat
+# Then run setup.bat again
+.\setup.bat
 ```
 
 ### environ.env not created
@@ -132,17 +110,13 @@ python setup_env.py
 1. Check that all credentials are filled in `environ.env`
 2. Verify Flask secret key is present
 3. Check `environ.env` has no typos or trailing spaces
-4. Run `desktop.bat` again with the console open to see error messages
+4. Run `desktop_start.bat` again with the console open to see error messages
 
 ### Google login fails
 **Error:** "Unauthorized" or "Invalid credentials"
 
 **Solution:**
 1. Verify `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are correct in `environ.env`
-2. Check that redirect URIs are registered in Google Cloud Console:
-   - `http://127.0.0.1:5000/`
-   - `http://127.0.0.1:5000/auth/callback`
-3. Make sure your Google account is added as a test user in Google Cloud
 
 ### OpenAI API errors
 **Error:** "Invalid API key" or "Authentication failed"
@@ -156,8 +130,8 @@ python setup_env.py
 
 ```
 MailChess/
-├── start.bat              # Run first for setup
-├── desktop.bat            # Run to launch the app
+├── setup.bat              # Run first for setup
+├── desktop_start.bat            # Run to launch the app
 ├── setup_env.py           # Auto-generates environ.env
 ├── environ.env            # Your configuration (auto-created, add credentials here)
 ├── environ.env.example    # Template showing what's needed

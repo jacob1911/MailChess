@@ -26,9 +26,9 @@ En webapplikation der kombinerer email-funktionalitet med skakspil. Spil skak me
 ### Hurtig start (Windows):
 
 1. **Extract** zip-filen til en mappe
-2. **Kør** `start.bat` for at sætte miljøet op:
+2. **Kør** `setup.bat` for at sætte miljøet op:
    ```
-   start.bat
+   setup.bat
    ```
    Dette vil automatisk:
    - Installere Python dependencies
@@ -36,10 +36,10 @@ En webapplikation der kombinerer email-funktionalitet med skakspil. Spil skak me
    - Oprette `environ.env` fil
    - Sætte nødvendige mapper op
 
-3. **Rediger** `environ.env` og tilføj dine Google OAuth credentials
-4. **Kør** `desktop.bat` for at starte applikationen:
+3. **Tjek** `environ.env` og at keys er sat. 
+4. **Kør** `desktop_start.bat` for at starte applikationen:
    ```
-   desktop.bat
+   desktop_start.bat
    ```
 
 Applikationen åbner automatisk i et window på `http://localhost:5000`
@@ -74,8 +74,8 @@ MailChess/
 │   └── img/                 # Billeder og ikoner
 ├── instance/                 # Database og lokale data (SQLite)
 ├── stockfish/                # Stockfish chess engine source
-├── start.bat                 # Windows setup script
-├── desktop.bat               # Windows app launcher
+├── setup.bat                 # Windows setup script
+├── desktop_start.bat               # Windows app launcher
 ├── setup_env.py              # Auto-generates environ.env
 ├── SETUP.md                  # Detaljeret installations guide
 ├── ARCHITECTURE.md           # Teknisk arkitektur dokumentation
@@ -136,9 +136,9 @@ A web application that combines email functionality with chess. Play chess with 
 ### Quick Start (Windows):
 
 1. **Extract** the zip file to a folder
-2. **Run** `start.bat` to set up the environment:
+2. **Run** `setup.bat` to set up the environment:
    ```
-   start.bat
+   setup.bat
    ```
    This will automatically:
    - Install Python dependencies
@@ -147,9 +147,9 @@ A web application that combines email functionality with chess. Play chess with 
    - Set up necessary directories
 
 3. **Edit** `environ.env` and add your Google OAuth credentials
-4. **Run** `desktop.bat` to start the application:
+4. **Run** `desktop_start.bat` to start the application:
    ```
-   desktop.bat
+   desktop_start.bat
    ```
 
 The application will automatically open in a window on `http://localhost:5000`
@@ -184,8 +184,8 @@ MailChess/
 │   └── img/                 # Images and icons
 ├── instance/                 # Database and local data (SQLite)
 ├── stockfish/                # Stockfish chess engine source code
-├── start.bat                 # Windows setup script
-├── desktop.bat               # Windows app launcher
+├── setup.bat                 # Windows setup script
+├── desktop_start.bat               # Windows app launcher
 ├── setup_env.py              # Auto-generates environ.env
 ├── SETUP.md                  # Detailed installation guide
 ├── ARCHITECTURE.md           # Technical architecture documentation

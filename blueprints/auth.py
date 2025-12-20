@@ -1,6 +1,7 @@
 from flask import Blueprint, redirect, url_for, session, render_template, request # <-- ADDED request
 from authlib.integrations.flask_client import OAuth
 from models import db, User
+from datetime import datetime, timezone
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -53,7 +54,8 @@ def auth_callback():
             google_id=google_id,
             email=email,
             name=name,
-            picture=picture
+            picture=picture,
+            last_sync=datetime.now(timezone.utc)  # Set last_sync to login time for new users
         )
         if refresh_token:
             user.refresh_token = refresh_token

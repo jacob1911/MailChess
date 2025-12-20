@@ -1,735 +1,1406 @@
 <!DOCTYPE html>
-<html lang="da">
-
+<html lang="da" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MailChess - magnus.saksild@gmail.com vs webshop@web.matas.dk</title>
+    <title>MailChess - Indbakke</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
-
-    <!-- Quill Rich Text Editor -->
-    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-
+    
     <style>
-        #board {
-            touch-action: none;
-            user-select: none;
+        /* This fixes the email display in Dark Mode */
+        .dark .email-content-inverter {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        .dark .email-content-inverter img {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        
+        /* Smooth transition for theme switching */
+        html, body { transition: background-color 0.3s, color 0.3s; }
+
+        /* --- NEW WHEEL ANIMATION CSS --- */
+        @keyframes spin-wheel-keyframes {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(720deg); } /* Spins 2 full times */
         }
 
-        /* Styles for HTML message content */
-        .message-html-content {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            max-width: 100%;
-            overflow: hidden;
+        .wheel-spinning {
+            animation: spin-wheel-keyframes 2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; 
         }
-
-        .message-html-content img {
-            max-width: 100% !important;
-            width: auto !important;
-            height: auto !important;
-            display: block;
-            border-radius: 0.5rem;
-            margin: 0.5rem 0;
-            object-fit: contain;
-        }
-
-        .message-html-content p {
-            margin-bottom: 0.5rem;
-        }
-
-        .message-html-content strong,
-        .message-html-content b {
-            font-weight: 600;
-        }
-
-        .message-html-content em,
-        .message-html-content i {
-            font-style: italic;
-        }
-
-        .message-html-content a {
-            color: #4F46E5;
-            text-decoration: underline;
-        }
-
-        .message-html-content ul,
-        .message-html-content ol {
-            margin-left: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .message-html-content table {
-            border-collapse: collapse;
-            margin: 0.5rem 0;
-        }
-
-        .message-html-content td,
-        .message-html-content th {
-            border: 1px solid #E5E7EB;
-            padding: 0.5rem;
-        }
-
-        /* Quill editor styling */
-        #editor {
-            min-height: 150px;
-            background: white;
-            max-width: 100%;
-        }
-
-        .ql-toolbar {
-            background: #f9fafb;
-            border-top-left-radius: 0.5rem;
-            border-top-right-radius: 0.5rem;
-        }
-
-        .ql-container {
-            border-bottom-left-radius: 0.5rem;
-            border-bottom-right-radius: 0.5rem;
-            font-size: 14px;
-        }
-
-        /* Ensure images in Quill editor also respect boundaries */
-        .ql-editor img {
-            max-width: 100% !important;
-            height: auto !important;
-            display: block;
-            margin: 0.5rem 0;
-        }
-
-        /* Ensure messages container stays within bounds */
-        #messagesContainer {
-            overflow-x: hidden !important;
-            overflow-y: auto;
-            max-width: 100%;
-        }
-
-        #messagesContainer>div {
-            max-width: 100%;
-            overflow: hidden;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-
-        /* Prevent grid items from expanding beyond their column */
-        .grid>div {
-            min-width: 0;
-            max-width: 100%;
-            overflow: hidden;
-        }
-
-        /* Force all content within message boxes to stay contained */
-        .message-html-content * {
-            max-width: 100%;
-            position: static !important;
-            float: none !important;
-            overflow-wrap: anywhere;
-            word-break: break-word;
-            white-space: normal !important;
-        }
-
-        /* Ensure images and other media respect container width */
-        .message-html-content img,
-        .message-html-content video,
-        .message-html-content iframe,
-        .message-html-content canvas {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            object-fit: contain;
-            overflow: hidden;
-        }
-
-        /* Prevent any overflow in message cards */
-        .space-y-3>div {
-            overflow: hidden !important;
-            word-break: break-word;
-        }
-
-        /* Break long URLs and text */
-        .message-html-content,
-        .message-html-content p,
-        .message-html-content div,
-        .message-html-content span {
-            word-break: break-word !important;
-            overflow-wrap: anywhere !important;
-            hyphens: auto;
-        }
-
-        /* Specifically target long unbreakable strings */
-        .message-html-content a,
-        .message-html-content code,
-        .message-html-content pre {
-            word-break: break-all !important;
-            overflow-wrap: anywhere !important;
-            white-space: pre-wrap !important;
-        }
-
-        /* Force tables to be responsive */
-        .message-html-content table {
-            max-width: 100% !important;
-            table-layout: fixed;
-            width: 100% !important;
-        }
-
-        .message-html-content td,
-        .message-html-content th {
-            word-break: break-word !important;
-            overflow-wrap: anywhere !important;
-        }
-
-        /* Ensure sender names and timestamps stay within bounds */
-        .font-semibold,
-        .text-xs {
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Make flex containers allow wrapping if needed */
-        .flex.items-start.justify-between {
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        /* Ensure the entire page respects viewport width */
-        body,
-        html {
-            overflow-x: hidden;
-            max-width: 100vw;
-        }
-
-        .container {
-            overflow-x: hidden;
-        }
-
-        /* Specifically constrain message section elements */
-        #messagesContainer,
-        #messagesContainer *:not(.fa):not(.fas):not(.far):not(.fab) {
-            max-width: 100%;
-        }
-
-        .slider-container {
-            width: 300px;
-            margin: 30px auto;
-            text-align: center;
-        }
-
-        input[type="range"] {
-            width: 100%;
-            accent-color: #4CAF50;
-        }
-
-        .labels {
-            display: flex;
-            justify-content: space-between;
-            font-weight: bold;
-        }
-
-        #evalValue {
-            margin-top: 10px;
-            font-family: monospace;
-        }
+        /* -------------------------------- */
     </style>
+
+    
+<style>
+    .label-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .label-unread { background-color: #DBEAFE; color: #1E40AF; }
+    .label-starred { background-color: #FEF3C7; color: #D97706; }
+    .label-important { background-color: #FEE2E2; color: #DC2626; }
+    .label-inbox { background-color: #DCFCE7; color: #16A34A; }
+
+    /* Video Intro Styles */
+    #videoIntroOverlay {
+        opacity: 1;
+        transition: opacity 0.8s ease-out;
+    }
+
+    #videoIntroOverlay.fade-out {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    #introVideo {
+        object-fit: contain;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        #introVideo {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+        }
+    }
+</style>
+
+
+    <script>
+        // IMMEDIATE THEME CHECK: Runs before content loads
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
 </head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen text-gray-800 dark:text-gray-100 flex flex-col">
 
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Back Button -->
-        <a href="/inbox"
-            class="inline-block mb-4 text-indigo-600 hover:text-indigo-800 font-semibold">
-            <i class="fas fa-arrow-left mr-2"></i>
-            Tilbage til inbox
-        </a>
+    <nav class="p-4 bg-white/90 shadow-sm dark:bg-gray-900/90 transition-colors duration-200">
+        <div class="container mx-auto flex justify-between items-center">
+            <ul class="flex gap-6">
+                <li>
+                    <a href="/inbox" class="text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold flex items-center">
+                        <i class="fas fa-home mr-2"></i> Indbakke
+                    </a>
+                </li>
+                <li>
+                    <a href="/mail_stats/" class="text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold flex items-center">
+                        <i class="fas fa-chart-pie mr-2"></i> Statistik
+                    </a>
+                </li>
+            </ul>
 
-        <!-- Header -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-                        <i class="fas fa-chess text-indigo-600 mr-3"></i>
-                        Bestillingsoversigt fra Matas Webshop
-                    </h1>
-                    <p class="text-gray-600 mt-2">
-                        <span class="font-semibold">magnus.saksild@gmail.com</span>
-                        <i class="fas fa-exchange-alt mx-2"></i>
-                        <span class="font-semibold">webshop@web.matas.dk</span>
-                    </p>
-                </div>
-                <div class="text-right flex items-center space-x-3">
-                    <button id="exportConversationBtn" onclick="exportConversation()"
-                        class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-3 py-2 rounded-lg transition duration-200 flex items-center text-sm"
-                        title="Eksporter samtale">
-                        <img src="/static/img/openai.svg" alt="chatIcon" width="20"
-                            height="20">
-                    </button>
-                    <button id="syncThreadBtn" onclick="syncThread()"
-                        class="bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-2 rounded-lg transition duration-200 flex items-center text-sm">
-                        <i id="syncThreadIcon" class="fas fa-sync-alt"></i>
-                    </button>
-                    <div class="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-lg">
-                        <i class="fas fa-trophy mr-2"></i>
-                        <span class="font-bold">0</span> sejre
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sync Status -->
-            <div id="threadSyncStatus" class="hidden mt-4 p-3 rounded-lg"></div>
-        </div>
-
-        <!-- Summary Modal -->
-        <div id="summaryModal"
-            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg shadow-2xl p-6 max-w-2xl w-full mx-4">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
-                        <i class="fas fa-file-alt text-indigo-600 mr-2"></i>
-                        Samtale Referat
-                    </h2>
-                    <button onclick="closeSummaryModal()" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                <div id="summaryContent" class="text-gray-700 text-lg leading-relaxed mb-4 min-h-32">
-                    <!-- Typewriter text will appear here -->
-                </div>
-                <div id="tokenCount" class="text-xs text-gray-500 text-right mb-3">
-                    <!-- Token count will appear here -->
-                </div>
-                <button onclick="closeSummaryModal()"
-                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition duration-200">
-                    Luk
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-yellow-300 transition-colors shadow-sm">
+                    <i id="navThemeIcon" class="fas fa-moon"></i>
                 </button>
             </div>
         </div>
+    </nav>
 
-        <!-- Flash Messages -->
-        
-        
-        
+    
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 transition-colors duration-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-white flex items-center">
+                    <i class="fas fa-chess-knight text-indigo-600 dark:text-indigo-400 mr-3"></i>
+                    MailChess
+                </h1>
+                <p class="text-gray-600 dark:text-gray-300 mt-1">Velkommen, Jacob Frederiksen Steinthal</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleNewThread()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center shadow-md">
+                    <i class="fas fa-plus mr-2"></i> Ny tråd
+                </button>
+                
+                <a href="/mail_stats/" class="bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Statistik">
+                    <i class="fas fa-chart-pie"></i>
+                </a>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Messages Section -->
-            <div class="bg-white rounded-lg shadow-lg p-6 min-w-0" style="overflow: hidden;">
-                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-comments mr-2"></i>
-                    Beskeder
-                </h2>
-
-                <div id="messagesContainer" class="space-y-3 mb-6 max-h-96 overflow-y-auto overflow-x-hidden"
-                    style="max-width: 100%; overflow-x: hidden !important;">
-                    <div class="text-center py-8">
-                        <i class="fas fa-spinner fa-spin text-indigo-600 text-2xl"></i>
-                        <p class="text-gray-500 mt-2">Indlæser beskeder...</p>
-                    </div>
-                </div>
-
-                <!-- Reply Button -->
-                <button id="replyBtn" onclick="toggleReply()"
-                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition duration-200">
-                    <i class="fas fa-reply mr-2"></i>
-                    Svar med skaktræk
+                <button onclick="toggleLabelManager()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Administrer labels">
+                    <i class="fas fa-tags"></i>
+                </button>
+                
+                <button onclick="openWheelModal()"
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center shadow-md">
+                    <i class="fas fa-magic mr-2"></i> Træk Skæbnen
                 </button>
 
-                <!-- Reply Form (Hidden) -->
-                <div id="replyForm" class="hidden mt-4">
-                    <form method="POST" id="messageForm" class="space-y-4">
-                        
-                        <!-- Slur Warning Alert -->
-                        <div id="slurWarning" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-                            <p class="font-bold">Advarsel: Upassende sprogbrug</p>
-                            <p>Din besked indeholder ord, der kan opfattes som stødende. Overvej venligst at ændre din formulering.</p>
-                        </div>
+                <button onclick="toggleDarkMode()" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-yellow-300 font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Skift tema">
+                    <i id="themeIcon" class="fas fa-moon"></i>
+                </button>
 
-                        <div>
-                            <label class="block text-gray-700 font-semibold mb-2">Din besked</label>
-                            <!-- Quill editor container -->
-                            <div id="editor" class="bg-white"></div>
-                            <!-- Hidden textarea to submit HTML content -->
-                            <textarea name="body" id="messageBody" style="display:none;"></textarea>
-                        </div>
-                        <input type="hidden" name="move" id="moveInput" />
-                        <input type="hidden" name="is_html" value="true" />
-                        <div class="flex space-x-3">
-                            <button type="submit"
-                                class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition duration-200">
-                                <i class="fas fa-paper-plane mr-2"></i>
-                                Send
-                            </button>
-                            <button type="button" onclick="toggleReply()"
-                                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-6 py-2 rounded-lg transition duration-200">
-                                Annuller
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                <a href="/auth/logout" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-3 rounded-lg transition duration-200 flex items-center" title="Log ud">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
             </div>
-
-            <!-- Chess Board Section -->
-            <div class="bg-white rounded-lg shadow-lg p-6 min-w-0">
-                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-chess-board mr-2"></i>
-                    Skakbræt
-                </h2>
-                <div class="flex justify-center">
-                    <div id="board" style="width: 100%; max-width: 500px;"></div>
-                </div>
-                <div class="mt-4 text-center text-sm text-gray-600">
-                    <p><i class="fas fa-info-circle mr-1"></i> Træk en brik for at lave dit næste træk</p>
-                </div>
-                <div class="slider-container">
-                    <div class="labels">
-                        <span>⚫ Black</span>
-                        <span>⚪ White</span>
-                    </div>
-                    <div>
-                        <input type="range" id="evalSlider" min="-1000" max="1000" step="10" value="39" disabled>
-                        <div id="evalValue">evaluation: 39</div>
-                    </div>
-                </div>
-            </div>
-            <p>Stockscore = 39</p>
-
         </div>
     </div>
 
-   
+    
+        
+    
+
+    <div id="newThreadForm" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 transition-colors duration-200">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">
+            <i class="fas fa-envelope mr-2"></i> Opret ny tråd
+        </h2>
+        <form method="POST" class="space-y-4">
+            <div>
+                <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Modtager email</label>
+                <div class="relative">
+                    <input type="email" name="new_mail" id="recipientInput" required list="contactList"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        placeholder="modtager@example.com" autocomplete="off">
+                    <datalist id="contactList"></datalist>
+                </div>
+            </div>
+            <div>
+                <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Emne</label>
+                <input type="text" name="subject" required
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Skal vi spille skak?">
+            </div>
+            <div class="flex space-x-3">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200">
+                    <i class="fas fa-paper-plane mr-2"></i> Opret tråd
+                </button>
+                <button type="button" onclick="toggleNewThread()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-6 py-2 rounded-lg transition duration-200">
+                    Annuller
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div id="labelManager" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 transition-colors duration-200">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+                <i class="fas fa-tags mr-2"></i> Administrer Labels
+            </h2>
+            <button onclick="toggleLabelManager()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
+            <h3 class="font-semibold text-gray-700 dark:text-gray-200 mb-3">Opret nyt label</h3>
+            <form id="createLabelForm" class="space-y-3">
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1 text-sm">Label navn</label>
+                    <input type="text" id="labelName" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg" placeholder="Navn">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1 text-sm">Farve</label>
+                        <input type="color" id="labelColor" value="#6B7280" class="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1 text-sm">Ikon</label>
+                        <input type="file" id="labelIcon" accept="image/*" class="w-full text-sm text-gray-500 dark:text-gray-400">
+                    </div>
+                </div>
+                <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-lg">Opret</button>
+            </form>
+        </div>
+        <div id="customLabelsList" class="space-y-2"></div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 transition-colors duration-200">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+                <i class="fas fa-inbox mr-2"></i> Dine samtaler
+            </h2>
+            <div class="flex space-x-2 items-center">
+                <select id="labelFilter" onchange="filterThreads()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                    <option value="">Indbakke</option>
+                    <option value="UNREAD">Ulæste</option>
+                    <option value="STARRED">Stjernede</option>
+                    <option value="IMPORTANT">Vigtige</option>
+                    
+                </select>
+                <input type="number" id="threadCount" value="5" min="1" max="50" class="w-16 px-2 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-center">
+                <button id="fetchBtn" onclick="fetchNewThreads()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"><i id="fetchIcon" class="fas fa-download mr-2"></i> Hent</button>
+                <button id="syncBtn" onclick="syncExisting()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"><i id="syncIcon" class="fas fa-sync-alt mr-2"></i> Sync</button>
+                <button id="clearBtn" onclick="clearDatabase()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"><i id="clearIcon" class="fas fa-trash mr-2"></i> Ryd</button>
+            </div>
+        </div>
+
+        <div id="statusMessage" class="hidden mb-4 p-3 rounded-lg"></div>
+
+        <div id="threadsList">
+            
+            
+            
+            <div class="space-y-2">
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                            
+                        
+                    
+                
+                    
+                        
+                            
+                        
+                    
+                
+                    
+                        
+                            
+                        
+                    
+                
+                
+                <div class="relative group thread-item" data-labels="STARRED">
+                    <a href="/thread/4" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <p class="font-semibold text-gray-800 dark:text-gray-200">HEJ</p>
+                                            <div class="flex space-x-1">
+                                                
+                                                    
+                                                        
+                                                        <span class="label-badge label-starred">STARRED</span>
+                                                    
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        
+                                        
+                                            <span class="font-medium text-gray-900 dark:text-gray-300">
+                                                jacob.steinthal
+                                            </span> - 
+                                        
+                                        
+                                        Det kan du selv være a7a5Venlig...
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                20/12/25 10:47
+                            </span>
+                        </div>
+                    </a>
+                    
+                    <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
+                        <button onclick="toggleLabel(event, 4, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Stjerne">
+                            <i class="fas fa-star text-yellow-500"></i>
+                        </button>
+                        <button onclick="toggleLabel(event, 4, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Vigtig">
+                            <i class="fas fa-exclamation text-red-500"></i>
+                        </button>
+                        <button onclick="markAsRead(event, 4)" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
+                            <i class="fas fa-envelope-open text-blue-500"></i>
+                        </button>
+                        <div class="relative">
+                            <button onclick="toggleCustomLabelMenu(event, 4)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                                <i class="fas fa-tags text-purple-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                            
+                        
+                    
+                
+                
+                <div class="relative group thread-item" data-labels="IMPORTANT">
+                    <a href="/thread/1" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <p class="font-semibold text-gray-800 dark:text-gray-200">Sikkerhedsunderretning</p>
+                                            <div class="flex space-x-1">
+                                                
+                                                    
+                                                        
+                                                        <span class="label-badge label-important">IMPORTANT</span>
+                                                    
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        
+                                        
+                                            <span class="font-medium text-gray-900 dark:text-gray-300">
+                                                no-reply
+                                            </span> - 
+                                        
+                                        
+                                        .awl a {color: #FFFFFF;...
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                20/12/25 10:44
+                            </span>
+                        </div>
+                    </a>
+                    
+                    <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
+                        <button onclick="toggleLabel(event, 1, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Stjerne">
+                            <i class="fas fa-star text-yellow-500"></i>
+                        </button>
+                        <button onclick="toggleLabel(event, 1, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Vigtig">
+                            <i class="fas fa-exclamation text-red-500"></i>
+                        </button>
+                        <button onclick="markAsRead(event, 1)" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
+                            <i class="fas fa-envelope-open text-blue-500"></i>
+                        </button>
+                        <div class="relative">
+                            <button onclick="toggleCustomLabelMenu(event, 1)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                                <i class="fas fa-tags text-purple-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                
+                
+                
+                    
+                
+                
+                <div class="relative group thread-item" data-labels="">
+                    <a href="/thread/2" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <p class="font-semibold text-gray-800 dark:text-gray-200">=?UTF-8?Q?Du_er_g=C3=A5et_glip_af_billeder_fra_elias_og_1_anden?=</p>
+                                            <div class="flex space-x-1">
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        
+                                        
+                                            <span class="font-medium text-gray-900 dark:text-gray-300">
+                                                noreply-photos
+                                            </span> - 
+                                        
+                                        
+                                        elias og Jonas delte billeder med...
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                16/12/25 16:43
+                            </span>
+                        </div>
+                    </a>
+                    
+                    <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
+                        <button onclick="toggleLabel(event, 2, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Stjerne">
+                            <i class="fas fa-star text-yellow-500"></i>
+                        </button>
+                        <button onclick="toggleLabel(event, 2, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Vigtig">
+                            <i class="fas fa-exclamation text-red-500"></i>
+                        </button>
+                        <button onclick="markAsRead(event, 2)" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
+                            <i class="fas fa-envelope-open text-blue-500"></i>
+                        </button>
+                        <div class="relative">
+                            <button onclick="toggleCustomLabelMenu(event, 2)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                                <i class="fas fa-tags text-purple-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                
+                
+                
+                    
+                
+                
+                <div class="relative group thread-item" data-labels="">
+                    <a href="/thread/3" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <p class="font-semibold text-gray-800 dark:text-gray-200">En opdatering til din Google-konto</p>
+                                            <div class="flex space-x-1">
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        
+                                        
+                                            <span class="font-medium text-gray-900 dark:text-gray-300">
+                                                privacy-noreply
+                                            </span> - 
+                                        
+                                        
+                                        .awl a {color: #FFFFFF;...
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                12/12/25 20:00
+                            </span>
+                        </div>
+                    </a>
+                    
+                    <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
+                        <button onclick="toggleLabel(event, 3, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Stjerne">
+                            <i class="fas fa-star text-yellow-500"></i>
+                        </button>
+                        <button onclick="toggleLabel(event, 3, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Vigtig">
+                            <i class="fas fa-exclamation text-red-500"></i>
+                        </button>
+                        <button onclick="markAsRead(event, 3)" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
+                            <i class="fas fa-envelope-open text-blue-500"></i>
+                        </button>
+                        <div class="relative">
+                            <button onclick="toggleCustomLabelMenu(event, 3)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                                <i class="fas fa-tags text-purple-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                
+                
+                
+                    
+                
+                    
+                
+                
+                <div class="relative group thread-item" data-labels="">
+                    <a href="/thread/5" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <p class="font-semibold text-gray-800 dark:text-gray-200">HEJ MED DIG</p>
+                                            <div class="flex space-x-1">
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        
+                                        
+                                            <span class="font-medium text-gray-900 dark:text-gray-300">
+                                                jacob.steinthal
+                                            </span> - 
+                                        
+                                        
+                                        HEJ IGEN a7a5Venlig hilsen Jacob+45...
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                09/12/25 11:28
+                            </span>
+                        </div>
+                    </a>
+                    
+                    <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
+                        <button onclick="toggleLabel(event, 5, 'STARRED')" class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Stjerne">
+                            <i class="fas fa-star text-yellow-500"></i>
+                        </button>
+                        <button onclick="toggleLabel(event, 5, 'IMPORTANT')" class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Vigtig">
+                            <i class="fas fa-exclamation text-red-500"></i>
+                        </button>
+                        <button onclick="markAsRead(event, 5)" class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Marker som læst">
+                            <i class="fas fa-envelope-open text-blue-500"></i>
+                        </button>
+                        <div class="relative">
+                            <button onclick="toggleCustomLabelMenu(event, 5)" class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200" title="Custom labels">
+                                <i class="fas fa-tags text-purple-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<div id="wheelModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 text-center transition-transform duration-300">
+        
+        <h2 id="wheelTitle" class="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+            <i class="fas fa-spinner fa-spin text-yellow-500 mr-2"></i> Hjulet Spinner...
+        </h2>
+
+        <div id="wheelAnimation" class="h-24 flex items-center justify-center mb-6 text-yellow-500 text-6xl">
+            <i class="fas fa-question-circle"></i>
+        </div>
+
+        <p id="wheelResultText" class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-6 hidden">
+            </p>
+
+        <button id="wheelActionButton" onclick="confirmWheelAction()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+            Bekræft Handling
+        </button>
+        <button onclick="closeWheelModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition duration-200">
+            Luk
+        </button>
+    </div>
+</div>
+
+<!-- Video Intro Overlay -->
+<div id="videoIntroOverlay" class="hidden fixed inset-0 bg-black z-60 flex items-center justify-center">
+    <video
+        id="introVideo"
+        class="max-w-full max-h-full"
+        autoplay
+        muted
+        playsinline
+        webkit-playsinline
+        preload="auto">
+        <source src="/static/hest.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+</div>
+
 
     <script>
-        let game = new Chess("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        let board;
-        let quill;
-        const currentUser = "magnus.saksild@gmail.com";
-        const threadId = 16;
-        
-        // --- Slur Detection List ---
-        // Using the same list as in stats.py for consistency
-        const BAD_WORDS = [
-            "idiot", "stupid", "fjols", "taber", "skod", "lort", "fuck", "sgu", "helvede"
-        ];
+        // --- DARK MODE LOGIC ---
 
-        // Initialize Quill editor
-        quill = new Quill('#editor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    ['bold', 'italic', 'underline'],
-                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                    ['link', 'image'],
-                    ['clean']
-                ]
-            },
-            placeholder: 'Skriv din besked her...'
-        });
-
-        // --- Real-time Slur Detection Logic ---
-        quill.on('text-change', function(delta, oldDelta, source) {
-            const text = quill.getText(); // Get plain text content
-            const warningBox = document.getElementById('slurWarning');
-            let foundSlur = false;
+        // Function to update the icon based on the current theme
+        function updateThemeIcon() {
+            const isDark = document.documentElement.classList.contains('dark');
             
-            // Normalize text: lowercase and split into words
-            // This regex splits by non-word characters but keeps Danish chars
-            const words = text.toLowerCase().split(/[^a-zá-ø0-9]+/);
+            // 1. Update the icon in the Navbar (navThemeIcon)
+            const navIcon = document.getElementById('navThemeIcon');
+            if (navIcon) {
+                navIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+
+            // 2. Update the icon in the Inbox Toolbar (themeIcon, if it exists)
+            const toolbarIcon = document.getElementById('themeIcon');
+            if (toolbarIcon) { 
+                toolbarIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+
+        // Function to toggle the theme
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
             
-            for (const word of words) {
-                if (BAD_WORDS.includes(word)) {
-                    foundSlur = true;
-                    break;
-                }
-            }
-
-            if (foundSlur) {
-                warningBox.classList.remove('hidden');
+            if (isDark) {
+                localStorage.setItem('theme', 'dark');
             } else {
-                warningBox.classList.add('hidden');
+                localStorage.setItem('theme', 'light');
             }
-        });
 
-        // Handle form submission
-        document.getElementById('messageForm').addEventListener('submit', function (e) {
-            // Get HTML content from Quill
-            const htmlContent = quill.root.innerHTML;
-
-            // Only submit if there's actual content (not just empty tags)
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlContent;
-            const textContent = tempDiv.textContent || tempDiv.innerText || '';
-
-            if (textContent.trim().length > 0) {
-                document.getElementById('messageBody').value = htmlContent;
-            } else {
-                document.getElementById('messageBody').value = '';
-            }
-        });
-
-        // Initialize the board immediately
-        board = Chessboard("board", {
-            draggable: true,
-            position: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-            pieceTheme: '/static/img/chesspieces/wikipedia/{piece}.png',
-            onDrop: function (source, target) {
-                let move = game.move({ from: source, to: target, promotion: "q" });
-                if (move === null) return "snapback";
-                document.getElementById("moveInput").value = move.from + move.to + (move.promotion ? move.promotion : "");
-
-                // Show success feedback
-                const moveInput = document.getElementById("moveInput");
-                if (moveInput.value) {
-                    // Optional: Add visual feedback that move was registered
-                    console.log("Move registered:", moveInput.value);
-                }
-            }
-        });
-
-        function toggleReply() {
-            const replyForm = document.getElementById('replyForm');
-            const replyBtn = document.getElementById('replyBtn');
-            replyForm.classList.toggle('hidden');
-            replyBtn.classList.toggle('hidden');
-
-            // Clear editor when toggling
-            if (!replyForm.classList.contains('hidden')) {
-                quill.setText('');
-            }
+            // Update the icon after the theme has been toggled
+            updateThemeIcon();
         }
 
-        // Typewriter effect function
-        function typeWriter(text, elementId, speed = 30) {
-            const element = document.getElementById(elementId);
-            element.innerHTML = ''; // Clear previous content
-            let i = 0;
-
-            return new Promise((resolve) => {
-                function type() {
-                    if (i < text.length) {
-                        element.innerHTML += text.charAt(i);
-                        i++;
-                        setTimeout(type, speed);
-                    } else {
-                        resolve();
-                    }
-                }
-                type();
-            });
-        }
-
-        // Close summary modal
-        function closeSummaryModal() {
-            document.getElementById('summaryModal').classList.add('hidden');
-        }
-
-        // Export conversation and show summary
-        async function exportConversation() {
-            const exportBtn = document.getElementById('exportConversationBtn');
-            const syncStatus = document.getElementById('threadSyncStatus');
-            const modal = document.getElementById('summaryModal');
-            const summaryContent = document.getElementById('summaryContent');
-            const tokenCount = document.getElementById('tokenCount');
-
-            // Disable button temporarily
-            exportBtn.disabled = true;
-
-            // Show status message
-            syncStatus.className = 'mt-4 p-3 rounded-lg bg-blue-100 text-blue-700';
-            syncStatus.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Genererer referat med AI...';
-            syncStatus.classList.remove('hidden');
-
-            // Show modal with loading state
-            modal.classList.remove('hidden');
-            summaryContent.innerHTML = '<i class="fas fa-spinner fa-spin text-indigo-600 mr-2"></i> Venter på OpenAI...';
-            tokenCount.innerHTML = '';
-
-            try {
-                const response = await fetch(`/api/thread/${threadId}/export`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const data = await response.json();
-
-                if (data.success && data.summary) {
-                    // Hide status
-                    syncStatus.classList.add('hidden');
-
-                    // Show typewriter effect
-                    await typeWriter(data.summary, 'summaryContent', 30);
-
-                    // Show token count
-                    tokenCount.innerHTML = `Tokens brugt: ${data.tokens_used} | Beskeder: ${data.message_count}`;
-
-                } else {
-                    syncStatus.className = 'mt-4 p-3 rounded-lg bg-red-100 text-red-700';
-                    syncStatus.innerHTML = `
-                        <i class="fas fa-exclamation-circle mr-2"></i>
-                        <strong>Fejl:</strong> ${data.error || 'Kunne ikke generere referat'}
-                    `;
-                    modal.classList.add('hidden');
-                }
-
-            } catch (error) {
-                syncStatus.className = 'mt-4 p-3 rounded-lg bg-red-100 text-red-700';
-                syncStatus.innerHTML = `
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    <strong>Netværksfejl:</strong> ${error.message}
-                `;
-                modal.classList.add('hidden');
-            } finally {
-                exportBtn.disabled = false;
-            }
-        }
-
-        // Sync thread with new messages (Publisher-Subscriber pattern)
-        async function syncThread() {
-            const syncBtn = document.getElementById('syncThreadBtn');
-            const syncIcon = document.getElementById('syncThreadIcon');
-            const syncStatus = document.getElementById('threadSyncStatus');
-
-            // Disable button and show loading
-            syncBtn.disabled = true;
-            syncIcon.classList.add('fa-spin');
-
-            // Show status message
-            syncStatus.className = 'mt-4 p-3 rounded-lg bg-blue-100 text-blue-700';
-            syncStatus.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Synkroniserer...';
-            syncStatus.classList.remove('hidden');
-
-            try {
-                // First sync all emails
-                const syncResponse = await fetch('/api/sync', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const syncData = await syncResponse.json();
-
-                if (syncData.success) {
-                    // Then get updated messages for this thread
-                    await updateThreadMessages();
-
-                    syncStatus.className = 'mt-4 p-3 rounded-lg bg-green-100 text-green-700';
-                    syncStatus.innerHTML = `
-                        <i class="fas fa-check-circle mr-2"></i>
-                        <strong>Opdateret!</strong> ${syncData.stats.messages_added} nye beskeder fundet.
-                    `;
-
-                    // Hide status after 3 seconds
-                    setTimeout(() => {
-                        syncStatus.classList.add('hidden');
-                    }, 3000);
-                } else {
-                    syncStatus.className = 'mt-4 p-3 rounded-lg bg-red-100 text-red-700';
-                    syncStatus.innerHTML = `
-                        <i class="fas fa-exclamation-circle mr-2"></i>
-                        <strong>Fejl:</strong> ${syncData.error}
-                    `;
-                }
-
-            } catch (error) {
-                syncStatus.className = 'mt-4 p-3 rounded-lg bg-red-100 text-red-700';
-                syncStatus.innerHTML = `
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    <strong>Netværksfejl:</strong> ${error.message}
-                `;
-            } finally {
-                syncBtn.disabled = false;
-                syncIcon.classList.remove('fa-spin');
-            }
-        }
-
-        // Update messages and board position
-        async function updateThreadMessages() {
-            try {
-                const response = await fetch(`/api/thread/${threadId}/messages`);
-                const data = await response.json();
-
-                if (data.success) {
-                    // Update messages list
-                    const messagesContainer = document.getElementById('messagesContainer');
-                    let html = '';
-
-                    if (data.messages.length > 0) {
-                        data.messages.forEach(msg => {
-                            const isMe = msg.sender === currentUser;
-                            const bgClass = isMe ? 'bg-indigo-50 border-l-4 border-indigo-500' : 'bg-gray-50 border-l-4 border-gray-400';
-                            const iconClass = isMe ? 'text-indigo-600' : 'text-gray-600';
-                            const senderName = isMe ? 'Du' : msg.sender;
-
-                            const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleString('da-DK', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            }) : '';
-
-                            // Handle HTML vs plain text content
-                            let bodyContent;
-                            if (msg.is_html) {
-                                bodyContent = `<div class="text-gray-700 message-html-content" style="max-width: 100%; overflow: hidden;">${msg.body}</div>`;
-                            } else {
-                                bodyContent = `<p class="text-gray-700 whitespace-pre-wrap break-words" style="max-width: 100%; overflow-wrap: anywhere; word-break: break-word;">${msg.body}</p>`;
-                            }
-
-                            html += `
-                                <div class="p-4 rounded-lg ${bgClass} break-words" style="max-width: 100%; overflow: hidden; word-wrap: break-word;">
-                                    <div class="flex items-start justify-between mb-2">
-                                        <span class="font-semibold text-gray-800">
-                                            <i class="fas fa-user-circle ${iconClass} mr-1"></i> ${senderName}
-                                        </span>
-                                        <span class="text-xs text-gray-500">${timestamp}</span>
-                                    </div>
-                                    ${msg.move ? `
-                                        <div class="mb-2">
-                                            <span class="bg-indigo-200 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold">
-                                                <i class="fas fa-chess-pawn mr-1"></i>
-                                                Træk: ${msg.move}
-                                            </span>
-                                        </div>
-                                    ` : ''}
-                                    ${bodyContent}
-                                </div>
-                            `;
-                        });
-                    } else {
-                        html = '<p class="text-gray-500 text-center py-8">Ingen beskeder endnu</p>';
-                    }
-
-                    messagesContainer.innerHTML = html;
-
-                    // Update chess board if FEN changed
-                    if (data.fen && data.fen !== game.fen()) {
-                        game = new Chess(data.fen);
-                        board.position(data.fen);
-                    }
-                }
-            } catch (error) {
-                console.error('Error updating thread messages:', error);
-            }
-        }
-
-        // Make board responsive
-        window.addEventListener('resize', function () {
-            if (board) {
-                board.resize();
-            }
-        });
-
-        // Load messages automatically when page loads
-        window.addEventListener('load', function () {
-            updateThreadMessages();
-        });
+        // Run on load
+        document.addEventListener('DOMContentLoaded', updateThemeIcon);
     </script>
-</body>
 
+    
+<script>
+    // Global variable to store the result from the server
+    let wheelOutcome = null;
+
+    function openWheelModal() {
+        const animationElement = document.getElementById('wheelAnimation');
+        
+        // 1. Reset and show loading state
+        document.getElementById('wheelTitle').innerHTML = '<i class="fas fa-spinner fa-spin text-yellow-500 mr-2"></i> Hjulet Spinner...';
+        document.getElementById('wheelResultText').classList.add('hidden');
+        document.getElementById('wheelActionButton').classList.add('hidden');
+        document.getElementById('wheelModal').classList.remove('hidden');
+
+        // **START ANIMATION**
+        animationElement.innerHTML = '<i class="fas fa-magic text-yellow-500"></i>';
+        animationElement.classList.add('wheel-spinning'); 
+
+        // 2. Start the spin delay (2 seconds)
+        // We set the timeout duration to match the CSS animation duration (2000ms)
+        setTimeout(fetchOutcomeAfterSpin, 2000); 
+    }
+
+    function closeWheelModal() {
+        document.getElementById('wheelModal').classList.add('hidden');
+        wheelOutcome = null; // Clear state
+    }
+    
+    // Step 2.5: Wait for the animation to finish, then fetch the result
+    async function fetchOutcomeAfterSpin() {
+        const animationElement = document.getElementById('wheelAnimation');
+
+        // Ensure the visual spin has stopped before calling the backend
+        animationElement.classList.remove('wheel-spinning');
+        
+        // 1. Fetch outcome from backend
+        try {
+            const response = await fetch('/api/spin-wheel', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                wheelOutcome = data.outcome;
+                const resultTextElement = document.getElementById('wheelResultText');
+                
+                // 2. Update the modal with the result
+                document.getElementById('wheelTitle').innerHTML = '<i class="fas fa-trophy text-green-500 mr-2"></i> Skæbnen er Afgjort!';
+                
+                // Set animation icon/text based on action
+                let icon = '';
+                let color = '';
+                
+                if (wheelOutcome.action === 'delete') {
+                    icon = '<i class="fas fa-trash-alt text-red-600"></i>';
+                    color = 'text-red-600';
+                } else if (wheelOutcome.action === 'label') {
+                    icon = '<i class="fas fa-tag text-blue-500"></i>';
+                    color = 'text-blue-500';
+                } else { // No action
+                    icon = '<i class="fas fa-hand-paper text-gray-500"></i>';
+                    color = 'text-gray-500';
+                }
+
+                animationElement.innerHTML = icon;
+
+                // Display the result message
+                resultTextElement.innerHTML = `
+                    Du fik: <span class="${color} font-bold">${wheelOutcome.description}</span><br>
+                    Dette påvirker: <span class="font-medium">${wheelOutcome.target_count} beskeder.</span>
+                `;
+                resultTextElement.classList.remove('hidden');
+
+                // Show action button if an action is required AND target count is > 0
+                if (wheelOutcome.action !== 'none' && wheelOutcome.target_count > 0) {
+                    document.getElementById('wheelActionButton').classList.remove('hidden');
+                } else if (wheelOutcome.action !== 'none' && wheelOutcome.target_count === 0) {
+                    // Specific message if the action has 0 impact
+                    resultTextElement.innerHTML = `
+                        Du fik: <span class="${color} font-bold">${wheelOutcome.description}</span><br>
+                        <span class="text-green-500 font-bold">0 beskeder fundet. Du slipper!</span>
+                    `;
+                }
+
+            } else {
+                alert('Fejl ved hjulet: ' + data.error);
+                closeWheelModal();
+            }
+
+        } catch (error) {
+            console.error('Network Error:', error);
+            alert('Netværksfejl under spin.');
+            closeWheelModal();
+        }
+    }
+
+    async function confirmWheelAction() {
+        if (!wheelOutcome) return;
+
+        // Show loading state while action is confirmed
+        const actionButton = document.getElementById('wheelActionButton');
+        actionButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Udfører...';
+        actionButton.disabled = true;
+
+        try {
+            const response = await fetch('/api/execute-wheel-action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(wheelOutcome) // Send the server's outcome back for confirmation
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(`Succes! %s beskeder blev opdateret.`.replace('%s', data.messages_affected));
+                closeWheelModal();
+                location.reload(); // Reload to update thread list
+            } else if (data.require_reauth) {
+                 alert('Authentication er påkrævet. Log venligst ud og ind igen.');
+                 location.href = '/auth/logout';
+            } else {
+                alert('Fejl under handling: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Execution Error:', error);
+            alert('Netværksfejl under handling.');
+        } finally {
+            actionButton.innerHTML = 'Bekræft Handling';
+            actionButton.disabled = false;
+        }
+    }
+
+    // Store custom labels globally
+    let customLabels = [];
+
+    async function loadContacts() {
+        try {
+            const response = await fetch('/api/contacts');
+            const data = await response.json();
+
+            if (data.success) {
+                const dataList = document.getElementById('contactList');
+                dataList.innerHTML = ''; // Clear existing
+
+                data.contacts.forEach(email => {
+                    const option = document.createElement('option');
+                    option.value = email;
+                    dataList.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading contacts:', error);
+        }
+    }
+
+    function toggleNewThread() {
+        const form = document.getElementById('newThreadForm');
+        form.classList.toggle('hidden');
+        
+        // Load contacts if we are showing the form
+        if (!form.classList.contains('hidden')) {
+            loadContacts();
+        }
+    }
+
+    function toggleLabelManager() {
+        const manager = document.getElementById('labelManager');
+        manager.classList.toggle('hidden');
+        if (!manager.classList.contains('hidden')) {
+            loadCustomLabels();
+        }
+    }
+
+    // Toggle a label on a thread (STARRED, IMPORTANT, UNREAD)
+    async function toggleLabel(event, threadId, label) {
+        event.stopPropagation();
+        
+        try {
+            const response = await fetch(`/api/threads/${threadId}/toggle-label`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ label: label })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Show confirmation
+                const statusMessage = document.getElementById('statusMessage');
+                statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
+                statusMessage.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Succes! ${data.updated} beskeder blev opdateret.`;
+                statusMessage.classList.remove('hidden');
+                setTimeout(() => statusMessage.classList.add('hidden'), 3000);
+                
+                // Update the thread list to reflect the change
+                await updateThreadList();
+            } else {
+                console.error('Error toggling label:', data);
+                alert('Fejl: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Netværksfejl: ' + error.message);
+        }
+    }
+
+    // Mark a thread as read (remove UNREAD label)
+    async function markAsRead(event, threadId) {
+        event.stopPropagation();
+        
+        try {
+            const response = await fetch(`/api/threads/${threadId}/mark-read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Show confirmation
+                const statusMessage = document.getElementById('statusMessage');
+                statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
+                statusMessage.innerHTML = `<i class="fas fa-check-circle mr-2"></i>Markeret som læst! ${data.updated} beskeder blev opdateret.`;
+                statusMessage.classList.remove('hidden');
+                setTimeout(() => statusMessage.classList.add('hidden'), 3000);
+                
+                // Update the thread list to reflect the change
+                await updateThreadList();
+            } else {
+                console.error('Error marking as read:', data);
+                alert('Fejl: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Netværksfejl: ' + error.message);
+        }
+    }
+
+    // Fetch new threads
+    async function fetchNewThreads() {
+        const fetchBtn = document.getElementById('fetchBtn');
+        const fetchIcon = document.getElementById('fetchIcon');
+        const statusMessage = document.getElementById('statusMessage');
+        const threadCount = document.getElementById('threadCount').value;
+
+        // Disable button and show loading
+        fetchBtn.disabled = true;
+        fetchIcon.classList.add('fa-spin');
+
+        // Show status message
+        statusMessage.className = 'mb-4 p-3 rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100';
+        statusMessage.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Henter sidste %s tråde...`.replace('%s', threadCount);
+        statusMessage.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/api/fetch-threads', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ count: threadCount })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const stats = data.stats;
+                statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
+                statusMessage.innerHTML = `
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <strong>Hentning fuldført!</strong><br>
+                    <small>
+                        Nye tråde: ${stats.threads_fetched} |
+                        Beskeder: ${stats.messages_added}
+                    </small>
+                `;
+
+                // Update thread list
+                await updateThreadList();
+
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    statusMessage.classList.add('hidden');
+                }, 5000);
+
+            } else {
+                showError(statusMessage, data);
+            }
+
+        } catch (error) {
+            statusMessage.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
+            statusMessage.innerHTML = `
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <strong>Netværksfejl:</strong> ${error.message}
+            `;
+        } finally {
+            fetchBtn.disabled = false;
+            fetchIcon.classList.remove('fa-spin');
+        }
+    }
+
+    // Sync existing threads
+    async function syncExisting() {
+        const syncBtn = document.getElementById('syncBtn');
+        const syncIcon = document.getElementById('syncIcon');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // Disable button and show loading
+        syncBtn.disabled = true;
+        syncIcon.classList.add('fa-spin');
+
+        // Show status message
+        statusMessage.className = 'mb-4 p-3 rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100';
+        statusMessage.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Synkroniserer eksisterende tråde...';
+        statusMessage.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/api/sync-existing', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const stats = data.stats;
+                statusMessage.className = 'mb-4 p-3 rounded-lg bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100';
+                statusMessage.innerHTML = `
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <strong>Synkronisering fuldført!</strong><br>
+                    <small>
+                        Opdaterede tråde: ${stats.threads_updated} |
+                        Nye beskeder: ${stats.messages_added} |
+                        Træk parset: ${stats.moves_parsed}
+                    </small>
+                `;
+
+                // Update thread list
+                await updateThreadList();
+
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    statusMessage.classList.add('hidden');
+                }, 5000);
+
+            } else {
+                showError(statusMessage, data);
+            }
+
+        } catch (error) {
+            statusMessage.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
+            statusMessage.innerHTML = `
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <strong>Netværksfejl:</strong> ${error.message}
+            `;
+        } finally {
+            syncBtn.disabled = false;
+            syncIcon.classList.remove('fa-spin');
+        }
+    }
+
+    // Helper to show error messages
+    function showError(element, data) {
+        element.className = 'mb-4 p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100';
+
+        if (data.require_reauth) {
+            element.innerHTML = `
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <strong>Authentication fejl:</strong> ${data.error}<br>
+                <button onclick="window.location.href='/auth/logout'"
+                        class="mt-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Log ud og ind igen
+                </button>
+            `;
+        } else {
+            element.innerHTML = `
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <strong>Fejl:</strong> ${data.error}
+            `;
+        }
+    }
+
+    // Load custom labels
+    async function loadCustomLabels() {
+        try {
+            const response = await fetch('/api/custom-labels');
+            const data = await response.json();
+
+            if (data.success) {
+                customLabels = data.labels;
+                renderCustomLabelsList();
+                updateLabelFilter();
+            }
+        } catch (error) {
+            console.error('Error loading custom labels:', error);
+        }
+    }
+
+    // Render custom labels list in manager
+    function renderCustomLabelsList() {
+        const container = document.getElementById('customLabelsList');
+
+        if (customLabels.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Ingen custom labels endnu</p>';
+            return;
+        }
+
+        let html = '';
+        customLabels.forEach(label => {
+            const iconHtml = label.icon_path
+                ? `<img src="${label.icon_path}" alt="${label.display_name}" class="w-5 h-5">`
+                : `<i class="fas fa-tag"></i>`;
+
+            html += `
+                <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded flex items-center justify-center" style="background-color: ${label.color}22; color: ${label.color};">
+                            ${iconHtml}
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800 dark:text-white">${label.display_name}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">${label.name}</p>
+                        </div>
+                    </div>
+                    <button onclick="deleteCustomLabel(${label.id}, '${label.display_name}')"
+                            class="text-red-500 hover:text-red-700 p-2">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    // Update label filter dropdown with custom labels
+    function updateLabelFilter() {
+        const filterSelect = document.getElementById('labelFilter');
+
+        // Remove existing custom label options
+        const options = Array.from(filterSelect.options);
+        options.forEach(option => {
+            if (option.dataset.custom === 'true') {
+                option.remove();
+            }
+        });
+
+        // Add custom labels
+        customLabels.forEach(label => {
+            const option = document.createElement('option');
+            option.value = label.name;
+            option.textContent = label.display_name;
+            option.dataset.custom = 'true';
+            filterSelect.appendChild(option);
+        });
+    }
+
+    // Create custom label
+    document.getElementById('createLabelForm')?.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const name = document.getElementById('labelName').value;
+        const color = document.getElementById('labelColor').value;
+        const iconFile = document.getElementById('labelIcon').files[0];
+
+        const formData = new FormData();
+        formData.append('display_name', name);
+        formData.append('color', color);
+        if (iconFile) {
+            formData.append('icon', iconFile);
+        }
+
+        try {
+            const response = await fetch('/api/custom-labels', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(`Label "%s" oprettet!`.replace('%s', data.label.display_name));
+                document.getElementById('createLabelForm').reset();
+                document.getElementById('labelColor').value = '#6B7280';
+                await loadCustomLabels();
+            } else {
+                alert('Fejl: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error creating label:', error);
+            alert('Netværksfejl: ' + error.message);
+        }
+    });
+
+    // Delete custom label
+    async function deleteCustomLabel(labelId, labelName) {
+        if (!confirm(`Er du sikker på at du vil slette labelet "%s"?`.replace('%s', labelName))) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/custom-labels/${labelId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message);
+                await loadCustomLabels();
+                await updateThreadList();
+            } else {
+                alert('Fejl: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error deleting label:', error);
+            alert('Netværksfejl: ' + error.message);
+        }
+    }
+
+    // Helper function to render label badges
+    function renderLabelBadges(labels) {
+        if (!labels || labels.length === 0) return '';
+
+        const labelIcons = {
+            'UNREAD': '<i class="fas fa-envelope"></i>',
+            'STARRED': '<i class="fas fa-star"></i>',
+            'IMPORTANT': '<i class="fas fa-exclamation"></i>',
+            'INBOX': '<i class="fas fa-inbox"></i>'
+        };
+
+        return labels.map(label => {
+            // Check if it's a custom label
+            const customLabel = customLabels.find(cl => cl.name === label);
+
+            if (customLabel) {
+                const iconHtml = customLabel.icon_path
+                    ? `<img src="${customLabel.icon_path}" alt="${customLabel.display_name}" style="width: 12px; height: 12px;">`
+                    : `<i class="fas fa-tag"></i>`;
+                return `<span class="label-badge" style="background-color: ${customLabel.color}22; color: ${customLabel.color}; border: 1px solid ${customLabel.color}">${iconHtml}</span>`;
+            } else {
+                // System label
+                const icon = labelIcons[label] || label;
+                const labelClass = `label-${label.toLowerCase()}`;
+                return `<span class="label-badge ${labelClass}">${icon}</span>`;
+            }
+        }).join('');
+    }
+
+    // Filter threads by label
+    function filterThreads() {
+        const selectedLabel = document.getElementById('labelFilter').value;
+        const threadsList = document.getElementById('threadsList');
+        const threadItems = threadsList.querySelectorAll('.thread-item');
+
+        threadItems.forEach(item => {
+            const labels = item.getAttribute('data-labels');
+            
+            // Show all if no filter selected
+            if (!selectedLabel) {
+                item.style.display = '';
+                return;
+            }
+            
+            // Check if message has the selected label
+            if (labels && labels.includes(selectedLabel)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    // Update thread list after sync
+    async function updateThreadList() {
+        try {
+            const response = await fetch('/api/threads');
+            const data = await response.json();
+
+            if (data.success && data.threads.length > 0) {
+                const threadsList = document.getElementById('threadsList');
+
+                // Build new thread list HTML
+                let html = '<div class="space-y-2">';
+                data.threads.forEach(thread => {
+                    const labelBadges = renderLabelBadges(thread.labels);
+                    const labelData = thread.labels ? thread.labels.join(',') : '';
+
+                    // Format timestamp
+                    let timestamp = '';
+                    if (thread.last_updated) {
+                        const date = new Date(thread.last_updated);
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const year = String(date.getFullYear()).slice(-2);
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        timestamp = `${day}/${month}/${year} ${hours}:${minutes}`;
+                    }
+
+                    // Format other person (username part before @)
+                    let otherPersonName = '';
+                    if (thread.other_person) {
+                        otherPersonName = thread.other_person.split('@')[0];
+                    }
+
+                    // Format snippet with person name
+                    let snippetText = thread.snippet ?
+                        (thread.snippet.length > 40 ? thread.snippet.substring(0, 40) + '...' : thread.snippet) :
+                        'Ingen beskeder endnu';
+
+                    let snippetHtml = otherPersonName ?
+                        `<span class="font-medium text-gray-900 dark:text-gray-300">${otherPersonName}</span> - ${snippetText}` :
+                        snippetText;
+
+                    html += `
+                        <div class="relative group thread-item" data-labels="${labelData}">
+                            <a href="/thread/${thread.id}"
+                               class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 transition duration-200">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3 flex-1">
+                                        <div class="bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-200 rounded-full w-10 h-10 flex items-center justify-center">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center justify-between mb-1">
+                                                <div class="flex items-center space-x-2">
+                                                    <p class="font-semibold text-gray-800 dark:text-gray-200">${thread.subject}</p>
+                                                    <div class="flex space-x-1">
+                                                        ${labelBadges}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">${snippetHtml}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">${timestamp}</span>
+                                        <i class="fas fa-chevron-right text-gray-400"></i>
+                                    </div>
+                                </div>
+                            </a>
+                            <div class="absolute top-2 right-2 hidden group-hover:flex space-x-1 bg-white dark:bg-gray-700 rounded-lg shadow-md p-1 border dark:border-gray-600">
+                                <button onclick="toggleLabel(event, ${thread.id}, 'STARRED')"
+                                        class="p-2 hover:bg-yellow-50 dark:hover:bg-gray-600 rounded transition duration-200"
+                                        title="Stjerne">
+                                    <i class="fas fa-star text-yellow-500"></i>
+                                </button>
+                                <button onclick="toggleLabel(event, ${thread.id}, 'IMPORTANT')"
+                                        class="p-2 hover:bg-red-50 dark:hover:bg-gray-600 rounded transition duration-200"
+                                        title="Vigtig">
+                                    <i class="fas fa-exclamation text-red-500"></i>
+                                </button>
+                                <button onclick="markAsRead(event, ${thread.id})"
+                                        class="p-2 hover:bg-blue-50 dark:hover:bg-gray-600 rounded transition duration-200"
+                                        title="Marker som læst">
+                                    <i class="fas fa-envelope-open text-blue-500"></i>
+                                </button>
+                                <div class="relative">
+                                    <button onclick="toggleCustomLabelMenu(event, ${thread.id})"
+                                            class="p-2 hover:bg-purple-50 dark:hover:bg-gray-600 rounded transition duration-200"
+                                            title="Custom labels">
+                                        <i class="fas fa-tags text-purple-500"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+
+                threadsList.innerHTML = html;
+
+                // Apply current filter if any
+                filterThreads();
+            } else if (data.success && data.threads.length === 0) {
+                const threadsList = document.getElementById('threadsList');
+                threadsList.innerHTML = `
+                    <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+                        <i class="fas fa-inbox text-6xl mb-4 opacity-50"></i>
+                        <p class="text-lg">Ingen tråde endnu</p>
+                        <p class="text-sm">Opret en ny tråd for at komme i gang!</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error updating thread list:', error);
+        }
+    }
+
+    // --- VIDEO INTRO LOGIC ---
+    (function() {
+        // Check if video has been shown this session
+        const videoShown = sessionStorage.getItem('videoIntroShown');
+
+        if (!videoShown) {
+            // Get elements
+            const overlay = document.getElementById('videoIntroOverlay');
+            const video = document.getElementById('introVideo');
+
+            if (overlay && video) {
+                // Show the overlay
+                overlay.classList.remove('hidden');
+
+                // Set sessionStorage flag immediately to prevent re-showing on refresh
+                sessionStorage.setItem('videoIntroShown', 'true');
+
+                // Handle video end event
+                video.addEventListener('ended', function() {
+                    fadeOutAndHide();
+                });
+
+                // Handle video error
+                video.addEventListener('error', function(e) {
+                    console.error('Video failed to load:', e);
+                    // Hide overlay immediately on error
+                    overlay.classList.add('hidden');
+                });
+
+                // Fade out function
+                function fadeOutAndHide() {
+                    // Add fade-out class
+                    overlay.classList.add('fade-out');
+
+                    // After transition completes, hide the overlay completely
+                    setTimeout(function() {
+                        overlay.classList.add('hidden');
+                    }, 800); // Match the CSS transition duration
+                }
+            }
+        }
+    })();
+</script>
+
+</body>
 </html>

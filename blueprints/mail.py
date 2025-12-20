@@ -997,6 +997,41 @@ def mark_thread_read(thread_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@mail_bp.route("/api/threads/<int:thread_id>/delete", methods=["DELETE"])
+def delete_thread(thread_id):
+    """Delete a thread and all its messages"""
+    if session.get("user") is None:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    user = session.get("user")
+    user_id = user.get("id")
+
+    thread = Thread.query.get_or_404(thread_id)
+    if thread.user_id != user_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        # Delete all messages in the thread first
+        messages_deleted = Message.query.filter_by(thread_id=thread_id).delete()
+
+        # Delete the thread
+        db.session.delete(thread)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Thread deleted successfully",
+            "messages_deleted": messages_deleted
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] delete_thread: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @mail_bp.route("/debug/message/<int:message_id>", methods=["GET"])
 def debug_message(message_id):
     if session.get("user") is None:
